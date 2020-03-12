@@ -1,0 +1,7 @@
+{
+	"splits": 10,
+	"percent_train": 70,
+	"seed": 12345,
+	"output": null,
+	"type_split": null
+}
