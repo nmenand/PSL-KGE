@@ -4,5 +4,5 @@ An integration of embedding techniques into Probablistic Soft Logic (PSL). Tradi
 
 # Data
 
-We use the FB15k and WN18 which is published in "Translating Embeddings for Modeling Multi-relational Data (2013)." by Bordes et al. [link](https://www.hds.utc.fr/everest/doku.php?id=en:transe)
+We use FB15k and WN18 which is published in "Translating Embeddings for Modeling Multi-relational Data (2013)." by Bordes et al. [link](https://www.hds.utc.fr/everest/doku.php?id=en:transe)
 
