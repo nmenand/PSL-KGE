@@ -32,9 +32,9 @@ data_len = len(data)
 train_bound = math.floor(percent_train * data_len)
 false_triple_ratio =  config["false_triples_ratio"]
 
-# Create data directory
+# Create splits directory
 current_dir = os.path.dirname(os.path.realpath(__file__))
-sub_dir = os.path.join(current_dir, "../data")
+sub_dir = os.path.join(current_dir, "../splits")
 os.mkdir(sub_dir)
 
 # Set seed
