@@ -73,7 +73,3 @@ for i in range(1, split_num+1):
                     negative_entity = random.choices(entity_list)
                 current_negative_triples.append(negative_entity[0])
                 neg_test.write(data[line][0] + '\t' + data[line][1] + '\t'+ negative_entity[0] + '\n')
-        train.close()
-        test.close()
-        neg_test.close()
-        neg_train.close()
