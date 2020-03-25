@@ -42,14 +42,16 @@ random.seed(seed)
 # Split data and write into data directory
 for i in range(1, split_num+1):
     random.shuffle(data)
+    split_dir  = os.path.join(sub_dir, "split" + str(i))
+    os.mkdir(split_dir)
     train_file = 'split' + str(i) + '_' + 'train' + '.txt'
     test_file = 'split' + str(i) + '_' + 'test' + '.txt'
     neg_test_file = 'split' + str(i) + '_' + 'negative_test' + '.txt'
     neg_train_file = 'split' + str(i) + '_' + 'negative_train' + '.txt'
-    train_path = os.path.join(sub_dir, train_file)
-    test_path = os.path.join(sub_dir, test_file)
-    neg_test_path = os.path.join(sub_dir, neg_test_file)
-    neg_train_path = os.path.join(sub_dir, neg_train_file)
+    train_path = os.path.join(split_dir, train_file)
+    test_path = os.path.join(split_dir, test_file)
+    neg_test_path = os.path.join(split_dir, neg_test_file)
+    neg_train_path = os.path.join(split_dir, neg_train_file)
     with open(train_path, 'w+') as train, open(test_path, 'w+') as test, open(
     neg_test_path, 'w+') as neg_test,  open(neg_train_path, 'w+') as neg_train:
         # Fill train data
