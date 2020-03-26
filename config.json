@@ -4,5 +4,6 @@
 	"seed": 12345,
 	"output": null,
 	"false_triples_ratio": 1,
+	"dataset": "WN18",
 	"type_split": null
 }
