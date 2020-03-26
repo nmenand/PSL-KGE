@@ -1,65 +1,79 @@
 #!bin/usr/env python3
 
-#NOTE: Not finshed 
-
 import os
+import shutil
 import sys
 
-# Takes in name of dataset to create model out of
-dataset_name = sys.argv[1]
+DATA = "data"
+DATA_FILE = "data.txt"
+ENTITY_MAP = "entity_map.txt"
+RELATION_MAP = "relation_map.txt"
+SPLITS = 'splits'
 
-# Create data subdirectory
-current_dir = os.path.dirname(os.path.realpath(__file__))
-dataset_dir = os.path.join(current_dir, "../"+dataset_name)
-data_file = os.path.join(dataset_dir, "data.txt")
-data_dir = os.path.join(current_dir, "../"+dataset_name + "_data")
-os.mkdir(data_dir)
+def write_data(data, file_path):
+	with open(file_path, 'w+') as out_file:
+		out_file.write('\n'.join(data))
 
-# Entity and mapping files
-entity_map_file = os.path.join(data_dir, "entity_map.txt")
-relation_map_file = os.path.join(data_dir, "relation_map.txt")
+# Return list of triples from filename
+def load_helper(data_file):
+	helper = []
+	with open(data_file, 'r') as file_ptr:
+		for line in file_ptr:
+			triple = line.strip('\n').split('\t')
+			helper.append(triple)
 
-# Extract relations and entities into two tables
-# Assume triples in dataset have form: entity, relation, entity
-with open(data_file) as df:
-	# Entity and relation hash tables
-	ht_relation = {}
-	ht_entity = {}
-	for line in df:
-		# Note: What value should be placed in table?
-		triple = line.strip('\n').split('\t')
-		if not triple[1] in ht_relation:
-			ht_relation[triple[1]] = 1
-		if not triple[0] in ht_entity:
-			ht_entity[triple[0]] = 1
-		if not triple[2] in ht_entity:
-			ht_entity[triple[2]] = 1
+	return helper
 
-# Create mapping files and place them into data_dir
-with open(entity_map_file, 'w+') as em, open(relation_map_file, 'w+') as rm:
-	num = 0
-	for ent in ht_entity:
-		em.write(str(num) + '\t' + ent + '\n')
-		num += 1
-	num = 0
-	for rel in ht_relation:
-		rm.write(str(num) + '\t' + rel + '\n')
-		num += 1
+def map_constituents(triple_list):
+	entity_map = {}
+	relation_map = {}
+	entity_count = 0
+	relation_count = 0
+	for triple in triple_list:
+		if not triple[0] in entity_map:
+			entity_map[triple[0]] = str(entity_count)
+			entity_count += 1
+		if not triple[1] in relation_map:
+			relation_map[triple[1]] = str(relation_count)
+			relation_count += 1
+		if not triple[2] in entity_map:
+			entity_map[triple[2]] = str(entity_count)
+			entity_count += 1
+	return entity_map, relation_map
 
-# Positive and Negative triple files
-false_block_obs_file = os.path.join(data_dir, "false_block_obs.txt")
-true_block_obs_file = os.path.join(data_dir, "true_block_obs.txt")
+def map_write_helper(map_table):
+	helper = [map_table[key] + '\t' + key for key in map_table]
+	return helper
 
-# Create observation files and place them into data_dir
+def main(dataset_name, dim_num):
+	current_dir = os.path.dirname(os.path.realpath(__file__))
+	dataset_dir = os.path.join(os.path.dirname(current_dir), dataset_name)
+	data_dir = os.path.join(dataset_dir, DATA)
+	
+	full_triple_list = load_helper(os.path.join(dataset_dir, DATA_FILE))
+	entity_map, relation_map = map_constituents(full_triple_list)
 
+	# Create or replace(if exists) data_dir
+	if os.path.exists(data_dir):
+		shutil.rmtree(data_dir)
+	os.mkdir(data_dir)
 
+	# Create mapping files under data_dir
+	write_data(map_write_helper(entity_map), os.path.join(data_dir, ENTITY_MAP))
+	write_data(map_write_helper(relation_map), os.path.join(data_dir, RELATION_MAP))
 
+def _load_args(args):
+	executable = args.pop(0)
+	if len(args) != 2:
+		print("USAGE: python3 %s <dataset_name> <dimension_number>" % executable, file = sys.stderr)
+		sys.exit(1)
 
+	dataset_name = args.pop(0)
+	dim_num = args.pop(0)
 
+	return dataset_name, dim_num
 
-
-
-
-
-
-
+if __name__ == '__main__':
+	print(sys.argv)
+	dataset_name, dim_num = _load_args(sys.argv)
+	main(dataset_name, dim_num)
