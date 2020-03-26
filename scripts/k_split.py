@@ -7,14 +7,27 @@ import math
 import random
 
 
-# Get command line arguments
-# datafile contains all data to be split
-data_file = sys.argv[1]
-config_file = sys.argv[2]
+# Only command line arg is the config file
+config_file = sys.argv[1]
+
+# Load config file
+with open(config_file, 'r') as cf:
+    config = json.load(cf)
+
+# Extract config file arguments
+dataset = config["dataset"]
+split_num = config["splits"]
+seed = config["seed"]
+percent_train = config["percent_train"]/100
+percent_test = round(1 - percent_train, 2)
+
+# Get data file from dataset directory
+current_dir = os.path.dirname(os.path.realpath(__file__))
+dataset_dir = os.path.join(current_dir, "../"+dataset)
+data_file = os.path.join(dataset_dir, "data.txt")
 
 # Read datafile and config file
-with open(data_file, 'r') as df, open(config_file, 'r') as cf:
-    config = json.load(cf)
+with open(data_file, 'r') as df:
     data = []
     entities = set()
     for line in df:
@@ -24,25 +37,20 @@ with open(data_file, 'r') as df, open(config_file, 'r') as cf:
     entity_list = list(entities)
 
 # Extract necessary variables to be able to create k splits
-split_num = config["splits"]
-seed = config["seed"]
-percent_train = config["percent_train"]/100
-percent_test = round(1 - percent_train, 2)
 data_len = len(data)
 train_bound = math.floor(percent_train * data_len)
 false_triple_ratio =  config["false_triples_ratio"]
 
 # Create splits directory
-current_dir = os.path.dirname(os.path.realpath(__file__))
-sub_dir = os.path.join(current_dir, "../splits")
-os.mkdir(sub_dir)
+top_splits_dir = os.path.join(dataset_dir, "splits")
+os.mkdir(top_splits_dir)
 
 # Set seed
 random.seed(seed)
 # Split data and write into data directory
 for i in range(1, split_num+1):
     random.shuffle(data)
-    split_dir  = os.path.join(sub_dir, "split" + str(i))
+    split_dir  = os.path.join(top_splits_dir, "split" + str(i))
     os.mkdir(split_dir)
     train_file = 'split' + str(i) + '_' + 'train' + '.txt'
     test_file = 'split' + str(i) + '_' + 'test' + '.txt'
