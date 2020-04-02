@@ -74,7 +74,7 @@ def main(dataset_name, dim_num):
 	dataset_dir = os.path.join(os.path.dirname(current_dir), dataset_name)
 	data_dir = os.path.join(dataset_dir, DATA)
 	splits_dir = os.path.join(dataset_dir, SPLITS)
-	
+
 	full_triple_list = load_helper(os.path.join(dataset_dir, DATA_FILE))
 	entity_map, relation_map = map_constituents(full_triple_list)
 
@@ -92,7 +92,7 @@ def main(dataset_name, dim_num):
 		os.path.join(data_dir, TRUE_BLOCK))
 
 	# Todo: Get split count from config file
-	for split_num in range(1, get_split_count(splits_dir) + 1):
+	for split_num in range(0, get_split_count(splits_dir)):
 		cur_split = SPLIT + str(split_num)
 		data_split_dir = os.path.join(data_dir, cur_split)
 		raw_split_dir = os.path.join(dataset_dir, SPLITS, cur_split)

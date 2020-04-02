@@ -25,7 +25,9 @@ def main():
     current_dir = os.path.dirname(os.path.realpath(__file__))
     dataset_dir = os.path.join(os.path.dirname(current_dir), config["dataset"])
     sub_dir = os.path.join(dataset_dir, "splits")
-    os.mkdir(sub_dir)
+    isdir = os.path.isdir(sub_dir)
+    if isdir is False:
+        os.mkdir(sub_dir)
 
     # Generate and write each split
     create_splits(data, entity_list, set_of_data, sub_dir, config)
@@ -126,7 +128,9 @@ def write_out(data, path):
 def create_split_path(sub_dir, split_num):
     #Create split directory
     split_dir  = os.path.join(sub_dir, "split" + str(split_num))
-    os.mkdir(split_dir)
+    isdir = os.path.isdir(split_dir)
+    if isdir is False:
+        os.mkdir(split_dir)
 
     #Generate all sub paths for the split
     train_file = 'split' + str(split_num) + '_' + 'train' + '.txt'
