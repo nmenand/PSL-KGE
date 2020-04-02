@@ -11,10 +11,15 @@ import random
 def main():
 
     # Read arguments
-    data_file, config_file = parse_args(sys.argv)
+    data_path, config_path = parse_args(sys.argv)
 
     # Load data from arguments
-    config, data, entity_list = read_data(data_file, config_file)
+    config, data, entity_list = load_data(data_path, config_path)
+
+    #Set the Seed
+    seed = config["seed"]
+    random.seed(seed)
+
 
     # Create splits directory
     current_dir = os.path.dirname(os.path.realpath(__file__))
@@ -35,7 +40,7 @@ def parse_args(args):
     config_file = args[2]
     return data_file, config_file
 
-def read_data(data_file, config_file):
+def load_data(data_file, config_file):
     data_fd =  open(data_file, 'r')
     config_fd = open(config_file, 'r')
 
@@ -49,19 +54,19 @@ def read_data(data_file, config_file):
         entities.add(line.strip('\n').split('\t')[2])
     entity_list = list(entities)
 
+    data_fd.close()
+    config_fd.close()
+
     return config, data, entity_list
 
 def create_splits(data, entity_list, sub_dir, config):
 
     # Extract necessary variables to be able to create k splits
     split_num = config["splits"]
-    seed = config["seed"]
     percent_train = config["percent_train"]/100
     percent_test = round(1 - percent_train, 2)
-    data_len = len(data)
-    train_bound = math.floor(percent_train * data_len)
+    train_bound = math.floor(percent_train * len(data))
     false_triple_ratio =  config["false_triples_ratio"]
-    random.seed(seed)
 
     # Lists used to store output
     train = ''
@@ -87,7 +92,7 @@ def create_splits(data, entity_list, sub_dir, config):
         write_out(negative_train, neg_train_path)
 
         # Create test split
-        for line in range(train_bound, data_len):
+        for line in range(train_bound, len(data)):
             test += (data[line][0] + '\t' + data[line][1] + '\t' + data[line][2] + '\n')
             #Generate Negative Triples
             current_negative_triples = [data[line][2]]
