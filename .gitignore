@@ -1,0 +1,31 @@
+# System files #
+################
+.DS_Store
+
+# Compiled sources #
+####################
+target
+classpath.out
+dependency-reduced-pom.xml
+*.jar
+
+# Eclipse metadata #
+####################
+.classpath
+.project
+.settings
+
+# Editor temporary #
+####################
+*.swp
+
+*.jar
+*-learned.psl
+
+data/
+psl/data/
+
+out.txt
+out.err
+inferred-predicates/
+__pycache__/
