@@ -63,18 +63,18 @@ def create_splits(data, entity_list, sub_dir, config):
 
     # Extract necessary variables to be able to create k splits
     split_num = config["splits"]
-    percent_train = config["percent_train"]/100
+    percent_train = config["percent_train"]
     percent_test = round(1 - percent_train, 2)
     train_bound = math.floor(percent_train * len(data))
     false_triple_ratio =  config["false_triples_ratio"]
 
-    # Lists used to store output
-    train = ''
-    test = ''
-    negative_test = ''
-    negative_train = ''
+    for i in range(0, split_num):
 
-    for i in range(1, split_num+1):
+    # Lists used to store output
+        train = ''
+        test = ''
+        negative_test = ''
+        negative_train = ''
         # Shuffle data to generate random split
         random.shuffle(data)
 
@@ -82,22 +82,21 @@ def create_splits(data, entity_list, sub_dir, config):
         train_path, test_path, neg_test_path, neg_train_path = create_split_path(sub_dir, i)
 
         #Create train split
-        for line in range(0, train_bound):
-            train += (data[line][0] + '\t' + data[line][1] + '\t' + data[line][2] + '\n')
-            #Generate Negative Triples
-            current_negative_triples = [data[line][2]]
-            negative_train += generate_negatives(data, line, entity_list, false_triple_ratio, current_negative_triples)
+        for line in range(0,  len(data)):
+            choose_split  = random.random()
+            if(choose_split >= percent_test):
+                train += (data[line][0] + '\t' + data[line][1] + '\t' + data[line][2] + '\n')
+                #Generate Negative Triples
+                current_negative_triples = [data[line][2]]
+                negative_train += generate_negatives(data, line, entity_list, false_triple_ratio, current_negative_triples)
+            else:
+                test += (data[line][0] + '\t' + data[line][1] + '\t' + data[line][2] + '\n')
+                #Generate Negative Triples
+                current_negative_triples = [data[line][2]]
+                negative_test += generate_negatives(data, line, entity_list, false_triple_ratio, current_negative_triples)
 
         write_out(train, train_path)
         write_out(negative_train, neg_train_path)
-
-        # Create test split
-        for line in range(train_bound, len(data)):
-            test += (data[line][0] + '\t' + data[line][1] + '\t' + data[line][2] + '\n')
-            #Generate Negative Triples
-            current_negative_triples = [data[line][2]]
-            negative_test += generate_negatives(data, line, entity_list, false_triple_ratio, current_negative_triples)
-
         write_out(test, test_path)
         write_out(negative_test, neg_test_path)
 

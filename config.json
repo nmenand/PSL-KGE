@@ -1,6 +1,6 @@
 {
-	"splits": 3,
-	"percent_train": 70,
+	"splits": 10,
+	"percent_train": 0.70,
 	"seed": 12345,
 	"output": null,
 	"false_triples_ratio": 1,
