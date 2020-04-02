@@ -11,10 +11,10 @@ import random
 def main():
 
     # Read arguments
-    data_path, config_path = parse_args(sys.argv)
+    config_path = parse_args(sys.argv)
 
     # Load data from arguments
-    config, data, entity_list = load_data(data_path, config_path)
+    config, data, entity_list, set_of_data= load_data(config_path)
 
     #Set the Seed
     seed = config["seed"]
@@ -28,38 +28,40 @@ def main():
     os.mkdir(sub_dir)
 
     # Generate and write each split
-    create_splits(data, entity_list, sub_dir, config)
+    create_splits(data, entity_list, set_of_data, sub_dir, config)
 
 
 def parse_args(args):
-    if(len(args) != 3):
-        print("Usage: gen_splits.sh path_to_data_file path_to_config_file")
+    if(len(args) != 2 or ({'h','help'} & {arg.lower().strip().replace('-', '') for arg in args})):
+        print("Usage: python3 gen_splits.py <path_to_config_file>")
         sys.exit(1)
 
-    data_file = args[1]
-    config_file = args[2]
-    return data_file, config_file
+    config_file = args[1]
+    return config_file
 
-def load_data(data_file, config_file):
-    data_fd =  open(data_file, 'r')
+def load_data(config_file):
     config_fd = open(config_file, 'r')
 
     config = json.load(config_fd)
     data = []
     entities = set()
+    set_of_data = set()
+
+    data_fd =  open(config["dataset"] + '/data.txt', 'r')
 
     # Read input file into a list of lines and a set of all entities seen
     for line in data_fd:
         data.append(line.strip('\n').split('\t'))
+        set_of_data.add(tuple(line.strip('\n').split('\t')))
         entities.add(line.strip('\n').split('\t')[2])
     entity_list = list(entities)
 
     data_fd.close()
     config_fd.close()
 
-    return config, data, entity_list
+    return config, data, entity_list, set_of_data
 
-def create_splits(data, entity_list, sub_dir, config):
+def create_splits(data, entity_list, set_of_data, sub_dir, config):
 
     # Extract necessary variables to be able to create k splits
     split_num = config["splits"]
@@ -67,6 +69,7 @@ def create_splits(data, entity_list, sub_dir, config):
     percent_test = round(1 - percent_train, 2)
     train_bound = math.floor(percent_train * len(data))
     false_triple_ratio =  config["false_triples_ratio"]
+    permanent_set_of_data = set_of_data.copy()
 
     for i in range(0, split_num):
 
@@ -78,6 +81,9 @@ def create_splits(data, entity_list, sub_dir, config):
         # Shuffle data to generate random split
         random.shuffle(data)
 
+        #reset set of data for checking negative triples
+        set_of_data = permanent_set_of_data
+
         #Generate split paths
         train_path, test_path, neg_test_path, neg_train_path = create_split_path(sub_dir, i)
 
@@ -87,30 +93,28 @@ def create_splits(data, entity_list, sub_dir, config):
             if(choose_split >= percent_test):
                 train += (data[line][0] + '\t' + data[line][1] + '\t' + data[line][2] + '\n')
                 #Generate Negative Triples
-                current_negative_triples = [data[line][2]]
-                negative_train += generate_negatives(data, line, entity_list, false_triple_ratio, current_negative_triples)
+                negative_train += generate_negatives(data, line, entity_list, set_of_data, false_triple_ratio)
             else:
                 test += (data[line][0] + '\t' + data[line][1] + '\t' + data[line][2] + '\n')
                 #Generate Negative Triples
-                current_negative_triples = [data[line][2]]
-                negative_test += generate_negatives(data, line, entity_list, false_triple_ratio, current_negative_triples)
+                negative_test += generate_negatives(data, line, entity_list, set_of_data, false_triple_ratio)
 
         write_out(train, train_path)
         write_out(negative_train, neg_train_path)
         write_out(test, test_path)
         write_out(negative_test, neg_test_path)
 
-def generate_negatives(data, line, entity_list, false_triple_ratio, current_negative_triples):
+def generate_negatives(data, line, entity_list, set_of_data, false_triple_ratio):
     negatives = ''
 
     #Pick random entities for false triples, while avoiding duplicates
     for _ in range(0, false_triple_ratio):
         negative_entity = random.choices(entity_list)
         #If entity is already in a false triple keep choosing
-        while negative_entity[0] in current_negative_triples:
+        while (data[line][0], data[line][1], negative_entity[0]) in set_of_data:
             negative_entity = random.choices(entity_list)
         #Append entity to the list and continue
-        current_negative_triples.append(negative_entity[0])
+        set_of_data.add((data[line][0], data[line][1], negative_entity[0]))
         negatives += (data[line][0] + '\t' + data[line][1] + '\t'+ negative_entity[0] + '\n')
     return negatives
 
