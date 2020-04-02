@@ -1,9 +1,10 @@
 {
-	"splits": 10,
+	"splits": 3,
 	"percent_train": 70,
 	"seed": 12345,
 	"output": null,
 	"false_triples_ratio": 1,
 	"dataset": "WN18",
+	"dimensions": 3,
 	"type_split": null
 }
