@@ -1,5 +1,6 @@
 #!bin/usr/env python3
 
+import json
 import os
 import shutil
 import sys
@@ -18,6 +19,7 @@ ENTITYDIM = "entitydim"
 RELATIONDIM = "relationdim"
 TARGET = "_target.txt"
 
+# Writes a list of data to a file
 def write_data(data, file_path):
 	with open(file_path, 'w+') as out_file:
 		out_file.write('\n'.join(data))
@@ -50,8 +52,7 @@ def map_constituents(triple_list):
 			entity_count += 1
 	return entity_map, relation_map
 
-# write_helper methods are for write_data
-
+# Helper methods create a list for write_data()
 def map_write_helper(map_table):
 	helper = [map_table[key] + '\t' + key for key in map_table]
 	return helper
@@ -82,10 +83,15 @@ def main(dataset_name, dim_num):
 		shutil.rmtree(data_dir)
 	os.mkdir(data_dir)
 
-	# Create mapping files under data_dir
+	# Create mapping files
 	write_data(map_write_helper(entity_map), os.path.join(data_dir, ENTITY_MAP))
 	write_data(map_write_helper(relation_map), os.path.join(data_dir, RELATION_MAP))
 
+	# Create trueblock_obs
+	write_data(block_write_helper(full_triple_list, entity_map, relation_map),
+		os.path.join(data_dir, TRUE_BLOCK))
+
+	# Todo: Get split count from config file
 	for split_num in range(1, get_split_count(splits_dir) + 1):
 		cur_split = SPLIT + str(split_num)
 		data_split_dir = os.path.join(data_dir, cur_split)
@@ -101,13 +107,12 @@ def main(dataset_name, dim_num):
 		# Load neg train triples of current split
 		neg_train_triples = load_helper(os.path.join(raw_split_dir, cur_split + NEG_TRAIN))
 
-		# Create trueblock_obs
-		write_data(block_write_helper(train_triples, entity_map, relation_map), os.path.join(data_split_dir, TRUE_BLOCK))
 		# Create falseblock_obs
-		write_data(block_write_helper(neg_train_triples, entity_map, relation_map), os.path.join(data_split_dir, FALSE_BLOCK))
+		write_data(block_write_helper(neg_train_triples, entity_map, relation_map),
+			os.path.join(data_split_dir, FALSE_BLOCK))
 
 		# Get all entities and relations in current split. Target files contain only
-		# entities and relations present in train file.
+		# entities and relations present in split_train file.
 		# Note: Don't actually need map_consituents() since
 		# trueblock_entities and trueblock relations serve only as record elements in train_triples
 		trueblock_entities, trueblock_relations = map_constituents(train_triples)
@@ -122,15 +127,19 @@ def main(dataset_name, dim_num):
 
 def _load_args(args):
 	executable = args.pop(0)
-	if len(args) != 2:
-		print("USAGE: python3 %s <dataset_name> <dimension_number>" % executable, file = sys.stderr)
+	if len(args) != 1:
+		print("USAGE: python3 %s <config.json>" % executable, file = sys.stderr)
 		sys.exit(1)
 
-	dataset_name = args.pop(0)
-	dim_num = args.pop(0)
+	config_file = args.pop(0)
+	with open(config_file, 'r') as config_fd:
+		config = json.load(config_fd)
+
+	dataset_name = config["dataset"]
+	dim_num = config["dimensions"]
 
 	return dataset_name, dim_num
 
 if __name__ == '__main__':
 	dataset_name, dim_num = _load_args(sys.argv)
-	main(dataset_name, int(dim_num))
+	main(dataset_name, dim_num)
