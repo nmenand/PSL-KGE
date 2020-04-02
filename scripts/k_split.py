@@ -18,7 +18,8 @@ def main():
 
     # Create splits directory
     current_dir = os.path.dirname(os.path.realpath(__file__))
-    sub_dir = os.path.join(current_dir, "../splits")
+    dataset_dir = os.path.join(os.path.dirname(current_dir), config["dataset"])
+    sub_dir = os.path.join(dataset_dir, "splits")
     os.mkdir(sub_dir)
 
     # Generate and write each split
