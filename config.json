@@ -5,6 +5,7 @@
 	"output": null,
 	"false_triples_ratio": 1,
 	"dataset": "WN18",
+	"data_file": "WN18/data.txt",
 	"dimensions": 3,
 	"type_split": null
 }
