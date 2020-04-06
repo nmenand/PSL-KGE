@@ -6,17 +6,19 @@ import json
 import math
 import random
 
-N_TRAIN = '_train.txt'
-N_TEST =  '_test.txt'
-
-P_SPLIT = 'split'
+RANDOM = "random"
+SPLIT = 'split'
 
 C_SEED = 'seed'
-C_SPLIT = 'splits'
+C_SPLITS = 'splits'
 C_DATASET = 'dataset'
-C_DATAFILE = 'data_file'
+C_DATAFILE = 'data'
 C_PERCENT_TRAIN = 'percent_train'
 C_FALSE_TRIP = 'false_triples_ratio'
+C_TYPE_SPLIT = 'type_split'
+
+N_TRAIN = '_train.txt'
+N_TEST =  '_test.txt'
 
 ENTITY_1 = 0
 ENTITY_2 = 2
@@ -40,7 +42,7 @@ def main():
     # Create splits directory
     current_dir = os.path.dirname(os.path.realpath(__file__))
     dataset_dir = os.path.join(os.path.dirname(current_dir), config[C_DATASET])
-    sub_dir = os.path.join(os.path.dirname(current_dir), C_SPLIT)
+    sub_dir = os.path.join(os.path.dirname(current_dir), C_DATAFILE)
     isdir = os.path.isdir(sub_dir)
     if isdir is False:
         os.mkdir(sub_dir)
@@ -80,15 +82,19 @@ def load_data(config_file):
     return config, data, entity_list, set_of_data
 
 def create_splits(data, entity_list, set_of_data, sub_dir, config):
+    if config[C_TYPE_SPLIT] == RANDOM:
+        random_splits(data, entity_list, set_of_data, sub_dir, config)
+    else:
+        print("Split Type not Supported")
+        sys.exit(1)
 
-    # Extract necessary variables to be able to create k splits
-    split_num = config[C_SPLIT]
+def random_splits(data, entity_list, set_of_data, sub_dir, config):
+    split_num = config[C_SPLITS]
     percent_train = config[C_PERCENT_TRAIN]
     percent_test = round(1 - percent_train, 2)
     train_bound = math.floor(percent_train * len(data))
     false_triple_ratio =  config[C_FALSE_TRIP]
     permanent_set_of_data = set_of_data.copy()
-
     for i in range(0, split_num):
 
     # Lists used to store output
@@ -118,9 +124,6 @@ def create_splits(data, entity_list, set_of_data, sub_dir, config):
         write_out(train, train_path)
         write_out(test, test_path)
 
-def random_splits():
-    return
-
 def generate_negatives(data, line, entity_list, set_of_data, false_triple_ratio):
     negatives = ''
 
@@ -142,14 +145,14 @@ def write_out(data, path):
 
 def create_split_path(sub_dir, split_num):
     #Create split directory
-    split_dir  = os.path.join(sub_dir, P_SPLIT + str(split_num))
+    split_dir  = os.path.join(sub_dir, SPLIT + str(split_num))
     isdir = os.path.isdir(split_dir)
     if isdir is False:
         os.mkdir(split_dir)
 
     #Generate all sub paths for the split
-    train_file = P_SPLIT + str(split_num) + N_TRAIN
-    test_file = P_SPLIT + str(split_num) + N_TEST
+    train_file = SPLIT + str(split_num) + N_TRAIN
+    test_file = SPLIT + str(split_num) + N_TEST
     train_path = os.path.join(split_dir, train_file)
     test_path = os.path.join(split_dir, test_file)
     return train_path, test_path
