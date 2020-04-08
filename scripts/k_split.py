@@ -42,7 +42,11 @@ def main():
     # Create splits directory
     current_dir = os.path.dirname(os.path.realpath(__file__))
     dataset_dir = os.path.join(os.path.dirname(current_dir), config[C_DATASET])
-    sub_dir = os.path.join(os.path.dirname(current_dir), C_DATAFILE)
+    raw_splits_dir = os.path.join(os.path.dirname(current_dir), C_DATAFILE)
+    if os.path.isdir(raw_splits_dir) is False:
+        os.mkdir(raw_splits_dir)
+    sub_dir = os.path.join(raw_splits_dir, config[C_DATASET])
+    #Todo: Should delete splits directory if exists?
     isdir = os.path.isdir(sub_dir)
     if isdir is False:
         os.mkdir(sub_dir)
