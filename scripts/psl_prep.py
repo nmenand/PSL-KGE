@@ -7,6 +7,7 @@ import sys
 	
 BASE_DIR = os.path.dirname(os.path.realpath(__file__))
 
+PSL = "psl"
 DATA = "data"
 DATA_FILE = "data.txt"
 ENTITY_MAP = "entity_map.txt"
@@ -21,15 +22,20 @@ ENTITYDIM = "entitydim"
 RELATIONDIM = "relationdim"
 TARGET = "_target.txt"
 
-# ENTITY_1 = 1
-# ENTITY_2 = 3
-# RELATION = 2
+ENTITY_1 = 0
+ENTITY_2 = 2
+RELATION = 1
+SIGN = 3
 
 # Writes a list of data to a file
 def write_data(data, file_path):
 	with open(file_path, 'w+') as out_file:
-		# (TODO) out_file.write('\n'.join(["\t".join(example) for example in data]))
-		out_file.write('\n'.join(data))
+		# if list of lists
+		if isinstance(data[0], list):
+			out_file.write('\n'.join(["\t".join(current_list) for current_list in data]))
+		# else regular list
+		else:
+			out_file.write('\n'.join(data))
 
 # Return list of triples from filename
 def load_helper(data_file):
@@ -42,37 +48,31 @@ def load_helper(data_file):
 	return helper
 
 # Map entities and relations to integers
+# Modifies triple_list to its mapped equivalent
 def map_constituents(triple_list):
 	entity_map = {}
 	relation_map = {}
 	entity_count = 0
 	relation_count = 0
 	for triple in triple_list:
-		if not triple[0] in entity_map:
-			entity_map[triple[0]] = str(entity_count)
-			# (TODO)
-         #triple[0] = str(entity_count)
-         entity_count += 1
-		if not triple[1] in relation_map:
-			relation_map[triple[1]] = str(relation_count)
-			relation_count += 1
-		if not triple[2] in entity_map:
-			entity_map[triple[2]] = str(entity_count)
+		if not triple[ENTITY_1] in entity_map:
+			entity_map[triple[ENTITY_1]] = str(entity_count)
 			entity_count += 1
+		triple[ENTITY_1] = entity_map[triple[ENTITY_1]]
+		if not triple[RELATION] in relation_map:
+			relation_map[triple[RELATION]] = str(relation_count)
+			relation_count += 1
+		triple[RELATION] = relation_map[triple[RELATION]]
+		if not triple[ENTITY_2] in entity_map:
+			entity_map[triple[ENTITY_2]] = str(entity_count)
+			entity_count += 1
+		triple[ENTITY_2] = entity_map[triple[ENTITY_2]]
+
 	return entity_map, relation_map
 
 # Helper methods create a list for write_data()
-def map_write_helper(map_table):
-	helper = [map_table[key] + '\t' + key for key in map_table]
-	return helper
-
-def block_write_helper(triple_list, ent_map, rel_map):
-	helper = [ent_map[triple[0]] + '\t' + rel_map[triple[1]] + '\t' + ent_map[triple[2]] for triple in triple_list]
-	return helper
-
-def target_write_helper(block_table, map_table):
-	helper = [map_table[key] for key in block_table]
-	return helper
+def map_raw_triple(raw_triple, ent_map, rel_map):
+	return [ent_map[raw_triple[ENTITY_1]], rel_map[raw_triple[RELATION]], ent_map[raw_triple[ENTITY_2]]]
 
 def get_split_count(splits_dir):
 	return len(os.listdir(splits_dir))
@@ -80,15 +80,17 @@ def get_split_count(splits_dir):
 # Note: Create PSL rules
 def main(dataset_name, dim_num):
 	# (TODO) change to a constant
-   current_dir = os.path.dirname(os.path.realpath(__file__))
+	current_dir = os.path.dirname(os.path.realpath(__file__))
+	raw_data_dir = os.path.join(os.path.dirname(current_dir), DATA)
+	psl_dir = os.path.join(os.path.dirname(current_dir), PSL)
 	dataset_dir = os.path.join(os.path.dirname(current_dir), dataset_name)
-	data_dir = os.path.join(dataset_dir, DATA)
-	splits_dir = os.path.join(dataset_dir, SPLITS)
+	data_dir = os.path.join(psl_dir, DATA)
+	splits_dir = os.path.join(raw_data_dir, dataset_name)
 
-   # (TODO) raw_data
 	full_triple_list = load_helper(os.path.join(dataset_dir, DATA_FILE))
-	# (TODO) Feed back data
-   entity_map, relation_map = map_constituents(full_triple_list)
+
+	# Note: full_triple_list is modified to its mapped equivalent after method call
+	entity_map, relation_map = map_constituents(full_triple_list)
 
 	# Create or replace(if exists) data_dir
 	if os.path.exists(data_dir):
@@ -96,47 +98,61 @@ def main(dataset_name, dim_num):
 	os.mkdir(data_dir)
 
 	# Create mapping files
-	write_data(map_write_helper(entity_map), os.path.join(data_dir, ENTITY_MAP))
-	write_data(map_write_helper(relation_map), os.path.join(data_dir, RELATION_MAP))
+	write_data([[entity_map[entity], entity] for entity in entity_map], os.path.join(data_dir, ENTITY_MAP))
+	write_data([[relation_map[relation], relation] for relation in relation_map], os.path.join(data_dir, RELATION_MAP))
 
 	# Create trueblock_obs
-	write_data(block_write_helper(full_triple_list, entity_map, relation_map),
-		os.path.join(data_dir, TRUE_BLOCK))
-
+	write_data(full_triple_list, os.path.join(data_dir, TRUE_BLOCK))
+	
 	# Todo: Get split count from config file
 	for split_num in range(0, get_split_count(splits_dir)):
-		# (TODO) Change to just number for split name
-      cur_split = SPLIT + str(split_num)
-		data_split_dir = os.path.join(data_dir, cur_split)
-		raw_split_dir = os.path.join(dataset_dir, SPLITS, cur_split)
+		cur_split = SPLIT + str(split_num)
+		data_split_dir = os.path.join(data_dir, str(split_num))
+		raw_split_dir = os.path.join(splits_dir, cur_split)
 
 		# Create or replace data_split dir under data_dir
 		if os.path.exists(data_split_dir):
 			shutil.rmtree(data_split_dir)
 		os.mkdir(data_split_dir)
 
-		# Load train triples of current split
-		train_triples = load_helper(os.path.join(raw_split_dir, cur_split + TRAIN))
-		# Load neg train triples of current split
-		neg_train_triples = load_helper(os.path.join(raw_split_dir, cur_split + NEG_TRAIN))
+		# Load triples of current split
+		raw_split_triples = load_helper(os.path.join(raw_split_dir, cur_split + TRAIN))
+		
+		train_triples = []
+		neg_train_triples = []
+
+		# Load true and false triples from current split
+		# Note: SIGN=0 means false triple
+		for triple in raw_split_triples:
+			if int(triple[SIGN]):
+				train_triples.append(map_raw_triple(triple, entity_map, relation_map))
+			else:
+				neg_train_triples.append(map_raw_triple(triple, entity_map, relation_map))
 
 		# Create falseblock_obs
-		write_data(block_write_helper(neg_train_triples, entity_map, relation_map),
-			os.path.join(data_split_dir, FALSE_BLOCK))
+		write_data(neg_train_triples, os.path.join(data_split_dir, FALSE_BLOCK))
 
 		# Get all entities and relations in current split. Target files contain only
 		# entities and relations present in split_train file.
-		# Note: Don't actually need map_consituents() since
-		# trueblock_entities and trueblock relations serve only as record elements in train_triples
-		trueblock_entities, trueblock_relations = map_constituents(train_triples)
+		target_entity_tracker = {}
+		target_relation_tracker = {}
+		for triple in train_triples:
+			if not triple[ENTITY_1] in target_entity_tracker:
+				target_entity_tracker[triple[ENTITY_1]] = None
+			if not triple[RELATION] in target_relation_tracker:
+				target_relation_tracker[triple[RELATION]] = None
+			if not triple[ENTITY_2] in target_entity_tracker:
+				target_entity_tracker[triple[ENTITY_2]] = None
+
+		target_entities = [entity for entity in target_entity_tracker]
+		target_relations = [relation for relation in target_relation_tracker]
 
 		# Create dimension target files
 		for dimension in range(1, dim_num + 1):
 			entity_dim_target = os.path.join(data_split_dir, ENTITYDIM + str(dimension) + TARGET)
 			relation_dim_target = os.path.join(data_split_dir, RELATIONDIM + str(dimension) + TARGET)
-
-			write_data(target_write_helper(trueblock_entities, entity_map), entity_dim_target)
-			write_data(target_write_helper(trueblock_relations, relation_map), relation_dim_target)
+			write_data(target_entities, entity_dim_target)
+			write_data(target_relations, relation_dim_target)
 
 def _load_args(args):
 	executable = args.pop(0)
