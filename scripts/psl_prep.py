@@ -79,36 +79,41 @@ def get_split_count(splits_dir):
 
 # Note: Create PSL rules
 def main(dataset_name, dim_num, split_num):
+	# PSL-KGE/data
 	raw_data_dir = os.path.join(os.path.dirname(BASE_DIR), DATA)
-	psl_dir = os.path.join(os.path.dirname(BASE_DIR), PSL)
-	dataset_dir = os.path.join(os.path.dirname(BASE_DIR), dataset_name)
-	data_dir = os.path.join(psl_dir, DATA)
+	# PSL-KGE/data/[dataset]
 	splits_dir = os.path.join(raw_data_dir, dataset_name)
+	# PSL-KGE/[dataset]
+	dataset_dir = os.path.join(os.path.dirname(BASE_DIR), dataset_name)
+	# PSL-KGE/psl
+	psl_dir = os.path.join(os.path.dirname(BASE_DIR), PSL)
+	# PSL-KGE/psl/data
+	psl_data_dir = os.path.join(psl_dir, DATA)
 
 	full_triple_list = load_helper(os.path.join(dataset_dir, DATA_FILE))
 
 	# Note: full_triple_list is modified to its mapped equivalent after method call
 	entity_map, relation_map = map_constituents(full_triple_list)
 
-	# Create or replace(if exists) data_dir
-	if os.path.exists(data_dir):
-		shutil.rmtree(data_dir)
-	os.mkdir(data_dir)
+	# Create or replace(if exists) psl_data_dir
+	if os.path.exists(psl_data_dir):
+		shutil.rmtree(psl_data_dir)
+	os.mkdir(psl_data_dir)
 
 	# Create mapping files
-	write_data([[entity_map[entity], entity] for entity in entity_map], os.path.join(data_dir, ENTITY_MAP))
-	write_data([[relation_map[relation], relation] for relation in relation_map], os.path.join(data_dir, RELATION_MAP))
+	write_data([[entity_map[entity], entity] for entity in entity_map], os.path.join(psl_data_dir, ENTITY_MAP))
+	write_data([[relation_map[relation], relation] for relation in relation_map], os.path.join(psl_data_dir, RELATION_MAP))
 
 	# Create trueblock_obs
-	write_data(full_triple_list, os.path.join(data_dir, TRUE_BLOCK))
+	write_data(full_triple_list, os.path.join(psl_data_dir, TRUE_BLOCK))
 	
 	# Loop through data splits
 	for split_num in range(0, split_num):
 		cur_split = SPLIT + str(split_num)
-		data_split_dir = os.path.join(data_dir, str(split_num))
+		data_split_dir = os.path.join(psl_data_dir, str(split_num))
 		raw_split_dir = os.path.join(splits_dir, cur_split)
 
-		# Create or replace data_split dir under data_dir
+		# Create or replace data_split dir under psl_data_dir
 		if os.path.exists(data_split_dir):
 			shutil.rmtree(data_split_dir)
 		os.mkdir(data_split_dir)
