@@ -78,12 +78,10 @@ def get_split_count(splits_dir):
 	return len(os.listdir(splits_dir))
 
 # Note: Create PSL rules
-def main(dataset_name, dim_num):
-	# (TODO) change to a constant
-	current_dir = os.path.dirname(os.path.realpath(__file__))
-	raw_data_dir = os.path.join(os.path.dirname(current_dir), DATA)
-	psl_dir = os.path.join(os.path.dirname(current_dir), PSL)
-	dataset_dir = os.path.join(os.path.dirname(current_dir), dataset_name)
+def main(dataset_name, dim_num, split_num):
+	raw_data_dir = os.path.join(os.path.dirname(BASE_DIR), DATA)
+	psl_dir = os.path.join(os.path.dirname(BASE_DIR), PSL)
+	dataset_dir = os.path.join(os.path.dirname(BASE_DIR), dataset_name)
 	data_dir = os.path.join(psl_dir, DATA)
 	splits_dir = os.path.join(raw_data_dir, dataset_name)
 
@@ -104,8 +102,8 @@ def main(dataset_name, dim_num):
 	# Create trueblock_obs
 	write_data(full_triple_list, os.path.join(data_dir, TRUE_BLOCK))
 	
-	# Todo: Get split count from config file
-	for split_num in range(0, get_split_count(splits_dir)):
+	# Loop through data splits
+	for split_num in range(0, split_num):
 		cur_split = SPLIT + str(split_num)
 		data_split_dir = os.path.join(data_dir, str(split_num))
 		raw_split_dir = os.path.join(splits_dir, cur_split)
@@ -166,9 +164,10 @@ def _load_args(args):
 
 	dataset_name = config["dataset"]
 	dim_num = config["dimensions"]
+	split_num = config["splits"]
 
-	return dataset_name, dim_num
+	return dataset_name, dim_num, split_num
 
 if __name__ == '__main__':
-	dataset_name, dim_num = _load_args(sys.argv)
-	main(dataset_name, dim_num)
+	dataset_name, dim_num, split_num = _load_args(sys.argv)
+	main(dataset_name, dim_num, split_num)
