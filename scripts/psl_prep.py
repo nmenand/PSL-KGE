@@ -9,6 +9,7 @@ BASE_DIR = os.path.dirname(os.path.realpath(__file__))
 
 PSL = "psl"
 DATA = "data"
+CLI  = "cli"
 DATA_FILE = "data.txt"
 ENTITY_MAP = "entity_map.txt"
 RELATION_MAP = "relation_map.txt"
@@ -21,6 +22,15 @@ FALSE_BLOCK = "falseblock_obs.txt"
 ENTITYDIM = "entitydim"
 RELATIONDIM = "relationdim"
 TARGET = "_target.txt"
+RULES_PSL = "PSL-KGE.psl"
+
+ENTITY1_RULE = "1.0: EntityDim"
+RELATION_RULE = "(e1) + RelationDim"
+ENTITY2_RULE = "(r1) - EntityDim"
+TRUE_RULE = "(e2) + 0*TrueBlock(e1, r1, e2) = 0"
+FALSE_RULE1 = "(e2) + 0*FalseBlock(e1, r1, e2) <= -1"
+FALSE_RULE2 = "(e2) + 0*FalseBlock(e1, r1, e2) >= 1\n"
+
 
 ENTITY_1 = 0
 ENTITY_2 = 2
@@ -70,6 +80,15 @@ def map_constituents(triple_list):
 
 	return entity_map, relation_map
 
+#Create PSL rules
+def generate_rules(num_dimensions):
+	rule_output = []
+	for dim in range(1, num_dimensions+1):
+		rule_output.append(ENTITY1_RULE + str(dim) + RELATION_RULE + str(dim) + ENTITY2_RULE+ str(dim) + TRUE_RULE)
+		rule_output.append(ENTITY1_RULE + str(dim) + RELATION_RULE + str(dim) + ENTITY2_RULE+ str(dim) + FALSE_RULE1)
+		rule_output.append(ENTITY1_RULE + str(dim) + RELATION_RULE + str(dim) + ENTITY2_RULE+ str(dim) + FALSE_RULE2)
+	return rule_output
+
 # Helper methods create a list for write_data()
 def map_raw_triple(raw_triple, ent_map, rel_map):
 	return [ent_map[raw_triple[ENTITY_1]], rel_map[raw_triple[RELATION]], ent_map[raw_triple[ENTITY_2]]]
@@ -89,6 +108,8 @@ def main(dataset_name, dim_num, split_num):
 	psl_dir = os.path.join(os.path.dirname(BASE_DIR), PSL)
 	# PSL-KGE/psl/data
 	psl_data_dir = os.path.join(psl_dir, DATA)
+	# PSL-KGE/psl/cli
+	cli_dir = os.path.join(psl_dir, CLI)
 
 	full_triple_list = load_helper(os.path.join(dataset_dir, DATA_FILE))
 
@@ -156,6 +177,11 @@ def main(dataset_name, dim_num, split_num):
 			relation_dim_target = os.path.join(data_split_dir, RELATIONDIM + str(dimension) + TARGET)
 			write_data(target_entities, entity_dim_target)
 			write_data(target_relations, relation_dim_target)
+
+		# Generate and write rules
+		psl_rules_target = os.path.join(cli_dir, RULES_PSL)
+		rules = generate_rules(dim_num)
+		write_data(rules, psl_rules_target)
 
 def _load_args(args):
 	executable = args.pop(0)
