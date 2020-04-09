@@ -32,6 +32,12 @@ Download or clone the project
 
 Call gen_splits.sh with config.json as the only argument to generate splits
 
+./gen_splits.sh config.json
+
 Call prepare_psl.sh with config.json as the only argument to convert the data into PSL form
 
+./prepare_psl.sh config.json
+
 Call run.sh located in the /psl/cli folder to run psl on the project
+
+./psl/cli/run.sh
