@@ -11,13 +11,20 @@ We use FB15k and WN18 which is published in "Translating Embeddings for Modeling
 All settings are located in the config.json file. 
 
 splits:              Number of splits to be generated
-percent_train:       % of dataset to be allocated to training data
-seed:                Seed for the pseudo-random number generator
-false_triples_ratio: Number of false triples to be generated for each valid triple
-Dataset:             Name of the Dataset folder
-data:                Path to the dataset file
-dimensions:          Number of Dimesions
-type_split:          Method used for splitting the data (currently only random is set)
+
+percent_train:       % of dataset to be allocated to training data  
+
+seed:                Seed for the pseudo-random number generator  
+
+false_triples_ratio: Number of false triples to be generated for each valid triple  
+
+Dataset:             Name of the Dataset folder  
+
+data:                Path to the dataset file  
+
+dimensions:          Number of Dimesions  
+
+type_split:          Method used for splitting the data (currently only random is set)  
 
 # Instructions
 
