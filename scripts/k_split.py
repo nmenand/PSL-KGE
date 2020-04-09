@@ -6,19 +6,21 @@ import json
 import math
 import random
 
+current_dir = os.path.dirname(os.path.realpath(__file__))
+
 RANDOM = "random"
 SPLIT = 'split'
 
-C_SEED = 'seed'
-C_SPLITS = 'splits'
-C_DATASET = 'dataset'
-C_DATAFILE = 'data'
-C_PERCENT_TRAIN = 'percent_train'
-C_FALSE_TRIP = 'false_triples_ratio'
-C_TYPE_SPLIT = 'type_split'
+SEED = 'seed'
+SPLITS = 'splits'
+DATASET = 'dataset'
+DATAFILE = 'data'
+PERCENT_TRAIN = 'percent_train'
+FALSE_TRIP_RATIO = 'false_triples_ratio'
+TYPE_SPLIT = 'type_split'
 
-N_TRAIN = '_train.txt'
-N_TEST =  '_test.txt'
+TRAIN = '_train.txt'
+TEST =  '_test.txt'
 
 ENTITY_1 = 0
 ENTITY_2 = 2
@@ -35,17 +37,16 @@ def main():
     config, data, entity_list, set_of_data= load_data(config_path)
 
     #Set the Seed
-    seed = config[C_SEED]
+    seed = config[SEED]
     random.seed(seed)
 
 
     # Create splits directory
-    current_dir = os.path.dirname(os.path.realpath(__file__))
-    dataset_dir = os.path.join(os.path.dirname(current_dir), config[C_DATASET])
-    raw_splits_dir = os.path.join(os.path.dirname(current_dir), C_DATAFILE)
+    dataset_dir = os.path.join(os.path.dirname(current_dir), config[DATASET])
+    raw_splits_dir = os.path.join(os.path.dirname(current_dir), DATAFILE)
     if os.path.isdir(raw_splits_dir) is False:
         os.mkdir(raw_splits_dir)
-    sub_dir = os.path.join(raw_splits_dir, config[C_DATASET])
+    sub_dir = os.path.join(raw_splits_dir, config[DATASET])
     #Todo: Should delete splits directory if exists?
     isdir = os.path.isdir(sub_dir)
     if isdir is False:
@@ -71,7 +72,7 @@ def load_data(config_file):
     entities = set()
     set_of_data = set()
 
-    data_fd =  open(config[C_DATAFILE], 'r')
+    data_fd =  open(config[DATAFILE], 'r')
 
     # Read input file into a list of lines and a set of all entities seen
     for line in data_fd:
@@ -86,18 +87,18 @@ def load_data(config_file):
     return config, data, entity_list, set_of_data
 
 def create_splits(data, entity_list, set_of_data, sub_dir, config):
-    if config[C_TYPE_SPLIT] == RANDOM:
+    if config[TYPE_SPLIT] == RANDOM:
         random_splits(data, entity_list, set_of_data, sub_dir, config)
     else:
         print("Split Type not Supported")
         sys.exit(1)
 
 def random_splits(data, entity_list, set_of_data, sub_dir, config):
-    split_num = config[C_SPLITS]
-    percent_train = config[C_PERCENT_TRAIN]
+    split_num = config[SPLITS]
+    percent_train = config[PERCENT_TRAIN]
     percent_test = round(1 - percent_train, 2)
     train_bound = math.floor(percent_train * len(data))
-    false_triple_ratio =  config[C_FALSE_TRIP]
+    false_triple_ratio =  config[FALSE_TRIP_RATIO]
     permanent_set_of_data = set_of_data.copy()
     for i in range(0, split_num):
 
@@ -155,8 +156,8 @@ def create_split_path(sub_dir, split_num):
         os.mkdir(split_dir)
 
     #Generate all sub paths for the split
-    train_file = SPLIT + str(split_num) + N_TRAIN
-    test_file = SPLIT + str(split_num) + N_TEST
+    train_file = SPLIT + str(split_num) + TRAIN
+    test_file = SPLIT + str(split_num) + TEST
     train_path = os.path.join(split_dir, train_file)
     test_path = os.path.join(split_dir, test_file)
     return train_path, test_path
