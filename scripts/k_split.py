@@ -19,8 +19,8 @@ PERCENT_TRAIN = 'percent_train'
 FALSE_TRIP_RATIO = 'false_triples_ratio'
 TYPE_SPLIT = 'type_split'
 
-TRAIN = '_train.txt'
-TEST =  '_test.txt'
+TRAIN = 'train.txt'
+TEST =  'test.txt'
 
 ENTITY_1 = 0
 ENTITY_2 = 2
@@ -150,14 +150,14 @@ def write_out(data, path):
 
 def create_split_path(sub_dir, split_num):
     #Create split directory
-    split_dir  = os.path.join(sub_dir, SPLIT + str(split_num))
+    split_dir  = os.path.join(sub_dir, str(split_num))
     isdir = os.path.isdir(split_dir)
     if isdir is False:
         os.mkdir(split_dir)
 
     #Generate all sub paths for the split
-    train_file = SPLIT + str(split_num) + TRAIN
-    test_file = SPLIT + str(split_num) + TEST
+    train_file = TRAIN
+    test_file = TEST
     train_path = os.path.join(split_dir, train_file)
     test_path = os.path.join(split_dir, test_file)
     return train_path, test_path
