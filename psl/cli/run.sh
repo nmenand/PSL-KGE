@@ -6,10 +6,10 @@
 
 readonly PSL_VERSION='2.3.0-SNAPSHOT'
 readonly JAR_PATH="./psl-cli-${PSL_VERSION}.jar"
-readonly BASE_NAME='simple-acquaintances'
+readonly BASE_NAME='PSL-KGE'
 
-readonly ADDITIONAL_PSL_OPTIONS=''
-readonly ADDITIONAL_EVAL_OPTIONS='--infer --eval org.linqs.psl.evaluation.statistics.DiscreteEvaluator'
+readonly ADDITIONAL_PSL_OPTIONS='-D admmreasoner.maxiterations=1000 -D admmreasoner.stepsize=0.1 --int-ids --postgres -D log4j.threshold=TRACE'
+readonly ADDITIONAL_EVAL_OPTIONS='--infer'
 
 function main() {
    trap exit SIGINT
@@ -18,7 +18,7 @@ function main() {
 
    # Make sure we can run PSL.
    check_requirements
-   # fetch_psl
+   fetch_psl
 
    # Run PSL
    runEvaluation "$@"
