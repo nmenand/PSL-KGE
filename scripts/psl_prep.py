@@ -42,10 +42,10 @@ OPEN = "/1: open"
 OBSERVATIONS = "observations:"
 TARGETS = "targets:"
 PREDICATE_PATH = ": ../data/kge/0/eval/"
-TRUEPATH = "\tFalseBlock: ../kge/data/0/eval/falseblock_obs.txt"
+TRUEPATH = "\tFalseBlock: ../kge/data/0/eval/falseblock_obs.txt\n"
 FALSEPATH = "\tTrueBlock: ../kge/data/0/eval/trueblock_obs.txt"
 ENTITY_RULE = "EntityDim"
-RELATION_RULE = "RelationDim"
+RELATION_RULE_DIM = "RelationDim"
 
 ENTITY_1 = 0
 ENTITY_2 = 2
@@ -107,7 +107,7 @@ def generate_rules(num_dimensions):
 	predicate_output.append(PREDICATES)
 	for dim in range(1, num_dimensions+1):
 		predicate_output.append("\t" + ENTITY_RULE + str(dim) + OPEN)
-		predicate_output.append("\t" + RELATION_RULE + str(dim) + OPEN)
+		predicate_output.append("\t" + RELATION_RULE_DIM + str(dim) + OPEN)
 	predicate_output.append(FALSEBLOCK)
 	predicate_output.append(TRUEBLOCK)
 
@@ -118,7 +118,7 @@ def generate_rules(num_dimensions):
 	predicate_output.append(TARGETS)
 	for dim in range(1, num_dimensions+1):
 		predicate_output.append("\t" + ENTITY_RULE + str(dim) + PREDICATE_PATH + ENTITYDIM + str(dim)+ TARGET)
-		predicate_output.append("\t" + RELATION_RULE + str(dim) + PREDICATE_PATH + RELATIONDIM + str(dim)+ TARGET)
+		predicate_output.append("\t" + RELATION_RULE_DIM + str(dim) + PREDICATE_PATH + RELATIONDIM + str(dim)+ TARGET)
 
 	return rule_output, predicate_output
 
