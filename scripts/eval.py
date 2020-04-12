@@ -7,13 +7,29 @@ import shutil
 import sys
 import random
 
-BASE_DIR = os.path.dirname(os.path.realpath(__file__))
-MAPE_DIR = os.path.join(os.path.dirname(BASE_DIR), "psl/data/kge/entity_map.txt")
-MAPR_DIR = os.path.join(os.path.dirname(BASE_DIR), "psl/data/kge/relation_map.txt")
-
-ENTITY_DIR = os.path.join(os.path.dirname(BASE_DIR), "psl/cli/ENTITYDIM")
-RELATION_DIR = os.path.join(os.path.dirname(BASE_DIR), "psl/cli/RELATIONDIM")
+ENTITY_MAP =  "psl/data/kge/entity_map.txt"
+RELATION_MAP =  "psl/data/kge/relation_map.txt"
+ENTITY_DIM = "psl/cli/ENTITYDIM"
+RELATION_DIM = "psl/cli/RELATIONDIM"
 TXT = ".txt"
+
+BASE_DIR = os.path.dirname(os.path.realpath(__file__))
+MAPE_DIR = os.path.join(os.path.dirname(BASE_DIR), ENTITY_MAP)
+MAPR_DIR = os.path.join(os.path.dirname(BASE_DIR), RELATION_MAP)
+
+ENTITY_DIR = os.path.join(os.path.dirname(BASE_DIR), ENTITY_DIM)
+RELATION_DIR = os.path.join(os.path.dirname(BASE_DIR), RELATION_DIM)
+
+DATA = "data"
+DIMENSIONS = "dimensions"
+
+def load_mappings(file_name, key, value):
+    map = {}
+    map_file = open(file_name)
+    for line in map_file:
+        map[line.strip('\n').split('\t')[key]] = line.strip('\n').split('\t')[value]
+    map_file.close()
+    return map
 
 def load_data(config):
 
@@ -21,7 +37,7 @@ def load_data(config):
     entities = set()
     set_of_data = set()
 
-    data_fd =  open(config['data'], 'r')
+    data_fd =  open(config[DATA], 'r')
 
     # Read input file into a list of lines and a set of all entities seen
     for line in data_fd:
@@ -35,52 +51,40 @@ def load_data(config):
     return data, entity_list, set_of_data
 
 def main(config, test_triple):
+
     data, entity_list, set_of_data = load_data(config)
     (e1, rel, e2) = test_triple
+    dimensions = config[DIMENSIONS]
+
     if test_triple in set_of_data:
-        print("Expected Value: 0")
+        print("Valid Triple")
     else:
-        print("Expected Value: 1.0")
+        print("Corrupted Triple")
 
-    entity_mapping = {}
-    relation_mapping = {}
+    entity_mapping = load_mappings(MAPE_DIR, 1, 0)
+    relation_mapping = load_mappings(MAPR_DIR, 1, 0)
 
-    mape = open(MAPE_DIR)
-    mapr = open(MAPR_DIR)
-    for line in mape:
-        entity_mapping[line.strip('\n').split('\t')[1]] = line.strip('\n').split('\t')[0]
-    for line in mapr:
-        relation_mapping[line.strip('\n').split('\t')[1]] = line.strip('\n').split('\t')[0]
-    mape.close()
-    mapr.close()
-    m_e1 = entity_mapping[e1]
-    m_e2 = entity_mapping[e2]
-    m_rel = relation_mapping[rel]
+    mapped_e1 = entity_mapping[e1]
+    mapped_e2 = entity_mapping[e2]
+    mapped_rel = relation_mapping[rel]
     sum = 0
 
-    for dim in range(1,config['dimensions']+1):
-        entity_num = {}
-        relation_num = {}
-        efd = open(ENTITY_DIR + str(dim) + TXT)
-        rfd = open(RELATION_DIR + str(dim) + TXT)
-        for line in efd:
-            entity_num[line.strip('\n').split('\t')[0]] = line.strip('\n').split('\t')[1]
-        for line in rfd:
-            relation_num[line.strip('\n').split('\t')[0]] = line.strip('\n').split('\t')[1]
-        efd.close()
-        rfd.close()
-        e1_num = entity_num[m_e1]
-        e2_num = entity_num[m_e2]
-        rel_num = relation_num[m_rel]
+    for dim in range(1, dimensions+1):
+        entity_num = load_mappings(ENTITY_DIR + str(dim) + TXT, 0, 1)
+        relation_num =  load_mappings(RELATION_DIR + str(dim) + TXT, 0, 1)
+        e1_num = entity_num[mapped_e1]
+        e2_num = entity_num[mapped_e2]
+        rel_num = relation_num[mapped_rel]
         value = float(e1_num) + float(rel_num) - float(e2_num)
         sum += value*value
-        print("Dim" + str(dim) +" Actual Value: " + str(value))
-    eval = 1 - 1/(3*math.sqrt(config['dimensions'])) * math.sqrt(sum)
+
+    eval = 1 - (1/(3*math.sqrt(dimensions)) * math.sqrt(sum))
     print("TransE Evaluation Function : " + str(eval))
+
 def _load_args(args):
     executable = args.pop(0)
     if len(args) != 4:
-        print("USAGE: python3 %s <config.json>" % executable, file = sys.stderr)
+        print("USAGE: python3 %s <config.json> original_entity1 original_relation original_entity2" % executable, file = sys.stderr)
         sys.exit(1)
 
     config_file = args.pop(0)
