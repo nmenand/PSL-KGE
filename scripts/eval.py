@@ -2,6 +2,7 @@
 
 import json
 import os
+import math
 import shutil
 import sys
 import random
@@ -72,9 +73,10 @@ def main(config, test_triple):
         e2_num = entity_num[m_e2]
         rel_num = relation_num[m_rel]
         value = float(e1_num) + float(rel_num) - float(e2_num)
-        sum += value
+        sum += value*value
         print("Dim" + str(dim) +" Actual Value: " + str(value))
-    print("Euclidian Distance :" + str(sum))
+    eval = 1 - 1/(3*math.sqrt(config['dimensions'])) * math.sqrt(sum)
+    print("TransE Evaluation Function : " + str(eval))
 def _load_args(args):
     executable = args.pop(0)
     if len(args) != 4:
