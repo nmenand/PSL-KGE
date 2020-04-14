@@ -26,6 +26,8 @@ dimensions:          Number of Dimesions
 
 type_split:          Method used for splitting the data (currently only random is set)  
 
+map_input:           Setting to have eval.sh map input from the original dataset to the PSL representation
+
 # Instructions
 
 Download or clone the project
@@ -41,3 +43,7 @@ Call prepare_psl.sh with config.json as the only argument to convert the data in
 Call run.sh located in the /psl/cli folder to run psl on the project
 
 ./psl/cli/run.sh
+
+Call eval.sh with config.json and a triple as arguments to evaluate the given triple. 
+
+./psl/cli/run.sh config.json entity_1 relation entity_2
