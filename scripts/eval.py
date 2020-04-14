@@ -31,6 +31,18 @@ def load_mappings(file_name, key, value):
     map_file.close()
     return map
 
+def eval_triple(mapped_e1 , mapped_e2, mapped_rel, dimensions):
+    sum = 0
+    for dim in range(1, dimensions+1):
+        entity_num = load_mappings(ENTITY_DIR + str(dim) + TXT, 0, 1)
+        relation_num =  load_mappings(RELATION_DIR + str(dim) + TXT, 0, 1)
+        e1_num = entity_num[mapped_e1]
+        e2_num = entity_num[mapped_e2]
+        rel_num = relation_num[mapped_rel]
+        value = float(e1_num) + float(rel_num) - float(e2_num)
+        sum += value*value
+    return 1 - (1/(3*math.sqrt(dimensions)) * math.sqrt(sum))
+
 def load_data(config):
 
     data = []
@@ -67,18 +79,9 @@ def main(config, test_triple):
     mapped_e1 = entity_mapping[e1]
     mapped_e2 = entity_mapping[e2]
     mapped_rel = relation_mapping[rel]
-    sum = 0
 
-    for dim in range(1, dimensions+1):
-        entity_num = load_mappings(ENTITY_DIR + str(dim) + TXT, 0, 1)
-        relation_num =  load_mappings(RELATION_DIR + str(dim) + TXT, 0, 1)
-        e1_num = entity_num[mapped_e1]
-        e2_num = entity_num[mapped_e2]
-        rel_num = relation_num[mapped_rel]
-        value = float(e1_num) + float(rel_num) - float(e2_num)
-        sum += value*value
+    eval = eval_triple(mapped_e1 , mapped_e2, mapped_rel, dimensions)
 
-    eval = 1 - (1/(3*math.sqrt(dimensions)) * math.sqrt(sum))
     print("TransE Evaluation Function : " + str(eval))
 
 def _load_args(args):
