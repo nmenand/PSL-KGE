@@ -13,15 +13,16 @@ ENTITY_DIM = "psl/cli/ENTITYDIM"
 RELATION_DIM = "psl/cli/RELATIONDIM"
 TXT = ".txt"
 
+DATA = "data"
+DIMENSIONS = "dimensions"
+MAP_INPUT = "map_input"
+
 BASE_DIR = os.path.dirname(os.path.realpath(__file__))
 MAPE_DIR = os.path.join(os.path.dirname(BASE_DIR), ENTITY_MAP)
 MAPR_DIR = os.path.join(os.path.dirname(BASE_DIR), RELATION_MAP)
 
 ENTITY_DIR = os.path.join(os.path.dirname(BASE_DIR), ENTITY_DIM)
 RELATION_DIR = os.path.join(os.path.dirname(BASE_DIR), RELATION_DIM)
-
-DATA = "data"
-DIMENSIONS = "dimensions"
 
 def load_mappings(file_name, key, value):
     map = {}
@@ -73,12 +74,17 @@ def main(config, test_triple):
     else:
         print("Corrupted Triple")
 
-    entity_mapping = load_mappings(MAPE_DIR, 1, 0)
-    relation_mapping = load_mappings(MAPR_DIR, 1, 0)
+    if(config[MAP_INPUT] == 1):
+        entity_mapping = load_mappings(MAPE_DIR, 1, 0)
+        relation_mapping = load_mappings(MAPR_DIR, 1, 0)
 
-    mapped_e1 = entity_mapping[e1]
-    mapped_e2 = entity_mapping[e2]
-    mapped_rel = relation_mapping[rel]
+        mapped_e1 = entity_mapping[e1]
+        mapped_e2 = entity_mapping[e2]
+        mapped_rel = relation_mapping[rel]
+    else:
+        mapped_e1 = e1
+        mapped_e2 = e2
+        mapped_rel = rel
 
     eval = eval_triple(mapped_e1 , mapped_e2, mapped_rel, dimensions)
 
@@ -86,7 +92,7 @@ def main(config, test_triple):
 
 def _load_args(args):
     executable = args.pop(0)
-    if len(args) != 4:
+    if len(args) != 4 or ({'h','help'} & {arg.lower().strip().replace('-', '') for arg in args}):
         print("USAGE: python3 %s <config.json> original_entity1 original_relation original_entity2" % executable, file = sys.stderr)
         sys.exit(1)
 

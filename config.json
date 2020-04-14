@@ -7,5 +7,6 @@
 	"dataset": "WN18",
 	"data": "WN18/data.txt",
 	"dimensions": 3,
-	"type_split": "random"
+	"type_split": "random",
+	"map_input": 1
 }

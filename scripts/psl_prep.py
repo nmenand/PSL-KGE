@@ -230,7 +230,7 @@ def main(dataset_name, dim_num, split_num):
 
 def _load_args(args):
 	executable = args.pop(0)
-	if len(args) != 1:
+	if (len(args) != 1 or ({'h','help'} & {arg.lower().strip().replace('-', '') for arg in args})):
 		print("USAGE: python3 %s <config.json>" % executable, file = sys.stderr)
 		sys.exit(1)
 
