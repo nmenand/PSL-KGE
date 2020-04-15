@@ -9,8 +9,8 @@ import random
 
 ENTITY_MAP =  "psl/data/kge/entity_map.txt"
 RELATION_MAP =  "psl/data/kge/relation_map.txt"
-ENTITY_DIM = "psl/cli/ENTITYDIM"
-RELATION_DIM = "psl/cli/RELATIONDIM"
+ENTITY_DIM = "psl/cli/inferred-predicates/ENTITYDIM"
+RELATION_DIM = "psl/cli/inferred-predicates/RELATIONDIM"
 TXT = ".txt"
 
 DATA = "data"
@@ -45,7 +45,6 @@ def eval_triple(mapped_e1 , mapped_e2, mapped_rel, dimensions):
     return 1 - (1/(3*math.sqrt(dimensions)) * math.sqrt(sum))
 
 def load_data(config):
-
     data = []
     entities = set()
     set_of_data = set()
@@ -107,5 +106,5 @@ def _load_args(args):
         return config, triple
 
 if __name__ == '__main__':
-	config, test_triple = _load_args(sys.argv)
-	main(config, test_triple)
+    config, test_triple = _load_args(sys.argv)
+    main(config, test_triple)
