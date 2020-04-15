@@ -9,8 +9,8 @@ import random
 
 ENTITY_MAP =  "psl/data/kge/entity_map.txt"
 RELATION_MAP =  "psl/data/kge/relation_map.txt"
-ENTITY_DIM = "psl/cli/ENTITYDIM"
-RELATION_DIM = "psl/cli/RELATIONDIM"
+ENTITY_DIM = "psl/cli/inferred-predicates/ENTITYDIM"
+RELATION_DIM = "psl/cli/inferred-predicates/RELATIONDIM"
 TXT = ".txt"
 
 DATA = "data"
@@ -55,7 +55,6 @@ def link_prediction(ent_embeddings, rel_embeddings, ent_mapping, ent_list, mappe
     return ranking_list
 
 def load_data(config):
-
     data = []
     entities = set()
     set_of_data = set()
@@ -125,5 +124,5 @@ def _load_args(args):
         return config, triple
 
 if __name__ == '__main__':
-	config, test_triple = _load_args(sys.argv)
-	main(config, test_triple)
+    config, test_triple = _load_args(sys.argv)
+    main(config, test_triple)
