@@ -131,8 +131,17 @@ def makedir(directory):
 def map_raw_triple(raw_triple, ent_map, rel_map):
 	return [ent_map[raw_triple[ENTITY_1]], rel_map[raw_triple[RELATION]], ent_map[raw_triple[ENTITY_2]]]
 
-def get_split_count(splits_dir):
-	return len(os.listdir(splits_dir))
+# Return positive and negative triples in separate lists
+# Note: SIGN=0 means false triple
+def separate_triples(all_triples, entity_map, relation_map):
+	true_triples = []
+	false_triples = []
+	for triple in all_triples:
+		if int(triple[SIGN]):
+			true_triples.append(map_raw_triple(triple, entity_map, relation_map))
+		else:
+			false_triples.append(map_raw_triple(triple, entity_map, relation_map))
+	return true_triples, false_triples
 
 # Note: Create PSL rules
 def main(dataset_name, dim_num, split_num):
@@ -178,24 +187,13 @@ def main(dataset_name, dim_num, split_num):
 		makedir(split_eval_dir)
 		makedir(split_learn_dir)
 
-		# Load triples of current split
-		raw_split_triples = load_helper(os.path.join(raw_split_dir, TRAIN))
+		# Load train triples & test triples of current split
+		raw_split_train_triples = load_helper(os.path.join(raw_split_dir, TRAIN))
 
-		train_triples = []
-		neg_train_triples = []
+		train_triples, neg_train_triples = separate_triples(raw_split_train_triples, entity_map, relation_map)
 
-		# Load true and false triples from current split
-		# Note: SIGN=0 means false triple
-		for triple in raw_split_triples:
-			if int(triple[SIGN]):
-				train_triples.append(map_raw_triple(triple, entity_map, relation_map))
-			else:
-				neg_train_triples.append(map_raw_triple(triple, entity_map, relation_map))
-
-		# Create trueblock_obs
+		# Create trueblock_obs & falseblock for eval
 		write_data(full_triple_list, os.path.join(split_eval_dir, TRUE_BLOCK))
-
-		# Create falseblock_obs
 		write_data(neg_train_triples, os.path.join(split_eval_dir, FALSE_BLOCK))
 
 		# Get all entities and relations in current split. Target files contain only
