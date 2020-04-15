@@ -32,17 +32,27 @@ def load_mappings(file_name, key, value):
     map_file.close()
     return map
 
-def eval_triple(mapped_e1 , mapped_e2, mapped_rel, dimensions):
+def eval_triple(mapped_e1 , mapped_e2, mapped_rel, dimensions, ent_embeddings, rel_embeddings):
     sum = 0
     for dim in range(1, dimensions+1):
-        entity_num = load_mappings(ENTITY_DIR + str(dim) + TXT, 0, 1)
-        relation_num =  load_mappings(RELATION_DIR + str(dim) + TXT, 0, 1)
-        e1_num = entity_num[mapped_e1]
-        e2_num = entity_num[mapped_e2]
-        rel_num = relation_num[mapped_rel]
+        e1_num = ent_embeddings[dim-1][mapped_e1]
+        e2_num = ent_embeddings[dim-1][mapped_e2]
+        rel_num = rel_embeddings[dim-1][mapped_rel]
         value = float(e1_num) + float(rel_num) - float(e2_num)
         sum += value*value
     return 1 - (1/(3*math.sqrt(dimensions)) * math.sqrt(sum))
+
+# Note: Need to test
+def link_prediction(ent_embeddings, rel_embeddings, ent_mapping, ent_list, mapped_e1, mapped_rel, mapped_e2):
+    original_triple = (mapped_e1, mapped_rel, mapped_e2)
+    ranking_list = []
+    dimensions = len(ent_embeddings)
+    for ent in ent_list:
+        corrupted_e1 = ent_mapping[ent]
+        score = eval_triple(corrupted_e1, mapped_e2, mapped_rel, dimensions, ent_embeddings, rel_embeddings)
+        ranking_list.append((score, corrupted_e1))
+    ranking_list.sort(key=lambda x: x[0], reverse=True)
+    return ranking_list
 
 def load_data(config):
 
@@ -86,8 +96,16 @@ def main(config, test_triple):
         mapped_e2 = e2
         mapped_rel = rel
 
-    eval = eval_triple(mapped_e1 , mapped_e2, mapped_rel, dimensions)
+    # Get entity and relation embeddings for each dimension
+    ent_embeddings = []
+    rel_embeddings = []
 
+    # ent_embeddings is a list of dictionaries
+    for dim in range(1, dimensions+1):
+        ent_embeddings.append(load_mappings(ENTITY_DIR + str(dim) + TXT, 0, 1))
+        rel_embeddings.append(load_mappings(RELATION_DIR + str(dim) + TXT, 0, 1))
+
+    eval = eval_triple(mapped_e1 , mapped_e2, mapped_rel, dimensions, ent_embeddings, rel_embeddings)
     print("TransE Evaluation Function : " + str(eval))
 
 def _load_args(args):
