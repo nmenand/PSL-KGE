@@ -42,13 +42,13 @@ def eval_triple(mapped_e1 , mapped_e2, mapped_rel, dimensions, ent_embeddings, r
         sum += value*value
     return 1 - (1/(3*math.sqrt(dimensions)) * math.sqrt(sum))
 
-# Note: Need to test
-def link_prediction(ent_embeddings, rel_embeddings, ent_mapping, ent_list, mapped_e1, mapped_rel, mapped_e2):
+# ent_list is a list mapped entities where each entity is of type string 
+def link_prediction(ent_embeddings, rel_embeddings, ent_list, mapped_e1, mapped_rel, mapped_e2):
     original_triple = (mapped_e1, mapped_rel, mapped_e2)
     ranking_list = []
     dimensions = len(ent_embeddings)
     for ent in ent_list:
-        corrupted_e1 = ent_mapping[ent]
+        corrupted_e1 = ent
         score = eval_triple(corrupted_e1, mapped_e2, mapped_rel, dimensions, ent_embeddings, rel_embeddings)
         ranking_list.append((score, corrupted_e1))
     ranking_list.sort(key=lambda x: x[0], reverse=True)
