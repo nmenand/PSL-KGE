@@ -193,7 +193,7 @@ def main(dataset_name, dim_num, split_num):
 		train_triples, neg_train_triples = separate_triples(raw_split_train_triples, entity_map, relation_map)
 
 		# Create trueblock_obs & falseblock for eval
-		write_data(full_triple_list, os.path.join(split_eval_dir, TRUE_BLOCK))
+		write_data(train_triples, os.path.join(split_eval_dir, TRUE_BLOCK))
 		write_data(neg_train_triples, os.path.join(split_eval_dir, FALSE_BLOCK))
 
 		# Get all entities and relations in current split. Target files contain only

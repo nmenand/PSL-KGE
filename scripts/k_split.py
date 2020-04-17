@@ -79,6 +79,7 @@ def load_data(config_file):
         data.append(line.strip('\n').split('\t'))
         set_of_data.add(tuple(line.strip('\n').split('\t')))
         entities.add(line.strip('\n').split('\t')[ENTITY_2])
+        entities.add(line.strip('\n').split('\t')[ENTITY_1])
     entity_list = list(entities)
 
     data_fd.close()
