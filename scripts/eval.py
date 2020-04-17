@@ -151,59 +151,66 @@ def test_all(config, entity_mapping, relation_mapping):
     print("Negative triples total sum is: " +str(neg_sum))
     print("Negative triples average is: " +str(neg_sum/len(triples)))
 
-def main(config, test_triple):
+def main(config, test_triple, flag_eval_all):
 
     data, entity_list, set_of_data = load_data(config)
     (e1, rel, e2) = test_triple
     dimensions = config[DIMENSIONS]
 
-    if test_triple in set_of_data:
-        print("Valid Triple")
-    else:
-        print("Corrupted Triple")
+    entity_mapping = load_mappings(MAPE_DIR, 1, 0)
+    relation_mapping = load_mappings(MAPR_DIR, 1, 0)
 
-    if(config[MAP_INPUT] == 1):
-        entity_mapping = load_mappings(MAPE_DIR, 1, 0)
-        relation_mapping = load_mappings(MAPR_DIR, 1, 0)
+    if(flag_eval_all == 1):
+        if test_triple in set_of_data:
+            print("Valid Triple")
+        else:
+            print("Corrupted Triple")
 
-        mapped_e1 = entity_mapping[e1]
-        mapped_e2 = entity_mapping[e2]
-        mapped_rel = relation_mapping[rel]
-    else:
-        mapped_e1 = e1
-        mapped_e2 = e2
-        mapped_rel = rel
+        if(config[MAP_INPUT] == 1):
+            entity_mapping = load_mappings(MAPE_DIR, 1, 0)
+            relation_mapping = load_mappings(MAPR_DIR, 1, 0)
 
-    # Get entity and relation embeddings for each dimension
-    ent_embeddings = []
-    rel_embeddings = []
+            mapped_e1 = entity_mapping[e1]
+            mapped_e2 = entity_mapping[e2]
+            mapped_rel = relation_mapping[rel]
+        else:
+            mapped_e1 = e1
+            mapped_e2 = e2
+            mapped_rel = rel
 
-    # ent_embeddings is a list of dictionaries
-    for dim in range(1, dimensions+1):
-        ent_embeddings.append(load_mappings(ENTITY_DIR + str(dim) + TXT, 0, 1))
-        rel_embeddings.append(load_mappings(RELATION_DIR + str(dim) + TXT, 0, 1))
+        # Get entity and relation embeddings for each dimension
+        ent_embeddings = []
+        rel_embeddings = []
 
-    eval = eval_triple(mapped_e1 , mapped_e2, mapped_rel, dimensions, ent_embeddings, rel_embeddings)
-    print("TransE Evaluation Function : " + str(eval) + "\n")
+        # ent_embeddings is a list of dictionaries
+        for dim in range(1, dimensions+1):
+            ent_embeddings.append(load_mappings(ENTITY_DIR + str(dim) + TXT, 0, 1))
+            rel_embeddings.append(load_mappings(RELATION_DIR + str(dim) + TXT, 0, 1))
+
+        eval = eval_triple(mapped_e1 , mapped_e2, mapped_rel, dimensions, ent_embeddings, rel_embeddings)
+        print("TransE Evaluation Function : " + str(eval) + "\n")
 
     test_all(config, entity_mapping, relation_mapping)
 
 def _load_args(args):
     executable = args.pop(0)
-    if len(args) != 4 or ({'h','help'} & {arg.lower().strip().replace('-', '') for arg in args}):
+    if (len(args) != 1 and len(args) != 4) or ({'h','help'} & {arg.lower().strip().replace('-', '') for arg in args}):
         print("USAGE: python3 %s <config.json> original_entity1 original_relation original_entity2" % executable, file = sys.stderr)
         sys.exit(1)
 
     config_file = args.pop(0)
     with open(config_file, 'r') as config_fd:
         config = json.load(config_fd)
-        entity1 = args.pop(0)
-        relation = args.pop(0)
-        entity2 = args.pop(0)
-        triple = (str(entity1), str(relation), str(entity2))
-
-        return config, triple
+        if len(args) == 0:
+            triple = (0,0,0)
+            return config, triple, 0
+        else:
+            entity1 = args.pop(0)
+            relation = args.pop(0)
+            entity2 = args.pop(0)
+            triple = (str(entity1), str(relation), str(entity2))
+            return config, triple, 1
 
 if __name__ == '__main__':
-    config, test_triple = _load_args(sys.argv)
-    main(config, test_triple)
+    config, test_triple, eval_all = _load_args(sys.argv)
+    main(config, test_triple, eval_all)
