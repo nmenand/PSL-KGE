@@ -8,7 +8,7 @@ readonly PSL_VERSION='2.3.0-SNAPSHOT'
 readonly JAR_PATH="./psl-cli-${PSL_VERSION}.jar"
 readonly BASE_NAME='kge'
 
-readonly ADDITIONAL_PSL_OPTIONS='-D admmreasoner.maxiterations=1000 -D admmreasoner.stepsize=0.1 --int-ids --postgres -D log4j.threshold=TRACE'
+readonly ADDITIONAL_PSL_OPTIONS='-D admmreasoner.maxiterations=1000 -D admmreasoner.stepsize=0.1 --int-ids -D log4j.threshold=TRACE'
 readonly ADDITIONAL_EVAL_OPTIONS='--infer'
 
 function main() {
