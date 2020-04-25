@@ -7,8 +7,6 @@ import os
 import sys
 import random
 
-current_dir = os.path.dirname(os.path.realpath(__file__))
-
 RANDOM = "random"
 SPLIT = 'split'
 
@@ -27,8 +25,9 @@ ENTITY_1 = 0
 ENTITY_2 = 2
 RELATION = 1
 
-# Get command line arguments
-# datafile contains all data to be split
+CURRENT_DIR = os.path.dirname(os.path.realpath(__file__))
+RAW_SPLITS_DIR = os.path.join(os.path.dirname(CURRENT_DIR), DATAFILE)
+
 def main():
 
     # Read arguments
@@ -42,12 +41,12 @@ def main():
     random.seed(seed)
 
     # Create splits directory
-    dataset_dir = os.path.join(os.path.dirname(current_dir), config[DATASET])
-    raw_splits_dir = os.path.join(os.path.dirname(current_dir), DATAFILE)
-    if os.path.isdir(raw_splits_dir) is False:
-        os.mkdir(raw_splits_dir)
+    dataset_dir = os.path.join(os.path.dirname(CURRENT_DIR), config[DATASET])
+    if os.path.isdir(RAW_SPLITS_DIR) is False:
+        os.mkdir(RAW_SPLITS_DIR)
 
-    sub_dir = os.path.join(raw_splits_dir, config[DATASET])
+    # Create a directory for the specific dataset
+    sub_dir = os.path.join(RAW_SPLITS_DIR, config[DATASET])
     if os.path.isdir(sub_dir) is False:
         os.mkdir(sub_dir)
 
@@ -65,12 +64,13 @@ def parse_args(args):
     config_file = args.pop(0)
     return config_file
 
-# Returns the dataset as: a list of lists and
-# a set used for checking negative data
+# Returns Config and the dataset as a list of
+# lists and a set used for checking negative data
 def load_data(config_file):
     config_fd = open(config_file, 'r')
 
     config = json.load(config_fd)
+    config_fd.close()
     data = []
     set_of_data = set()
 
@@ -83,7 +83,6 @@ def load_data(config_file):
         set_of_data.add(tuple(line_data))
 
     data_fd.close()
-    config_fd.close()
 
     return config, data, set_of_data
 
@@ -122,17 +121,22 @@ def random_splits(data, set_of_data, sub_dir, config):
         for line in range(0,  len(data)):
             choose_split  = random.random()
 
+            # Assigns a triple by comparing the random value to the percent
+            # of data to be assigned to the training split
             if(choose_split <= percent_train):
                 train.append([data[line][ENTITY_1], data[line][RELATION],  data[line][ENTITY_2], '1'])
-
-                # Add the entities in the triple to the set of entities needed
+                # Add the entities in the triple to the set of
+                # entities used in negative triple generation
                 train_entities.add(data[line][ENTITY_1])
                 train_entities.add(data[line][ENTITY_2])
             else:
                 test.append([data[line][ENTITY_1], data[line][RELATION],  data[line][ENTITY_2], '1'])
+                # Add the entities in the triple to the set of
+                # entities used in negative triple generation
                 test_entities.add(data[line][ENTITY_1])
                 test_entities.add(data[line][ENTITY_2])
 
+        # Generate negative test and train triples and add them to the list of triples
         train.extend(generate_negatives(train, list(train_entities), set_of_data, false_triple_ratio))
         test.extend(generate_negatives(test, list(test_entities), set_of_data, false_triple_ratio))
 
@@ -142,9 +146,10 @@ def random_splits(data, set_of_data, sub_dir, config):
 # Generates false triples, while avoiding duplicates
 def generate_negatives(data, entity_list, set_of_data, false_triple_ratio):
     negatives = []
-    # Repeat for each element in the list
+
+    # Generate a negative triple for each element in the list
     for line in data:
-        # Repeat process for the specified number of triples
+        # Repeat for the ratio of negative triples to positive ones
         for _ in range(0, false_triple_ratio):
 
             # Select a random entity from the list of entities
