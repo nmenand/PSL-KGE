@@ -42,8 +42,7 @@ def main():
 
     # Create a directory for the specific dataset
     sub_dir = os.path.join(RAW_SPLITS_DIR, config[DATASET])
-    if os.path.isdir(sub_dir) is False:
-        os.mkdir(sub_dir)
+    create_dir(sub_dir)
 
     # Generate and write each split
     create_splits(data, set_of_data, sub_dir, config)
@@ -71,6 +70,11 @@ def load_data(args):
             set_of_data.add(tuple(line_data))
 
     return config, data, set_of_data
+
+def create_dir(directory):
+    if os.path.exists(directory):
+        shutil.rmtree(directory)
+    os.mkdir(directory)
 
 def create_splits(data, set_of_data, sub_dir, config):
     if config[TYPE_SPLIT] == RANDOM:
