@@ -3,6 +3,7 @@
 import copy
 import json
 import os
+import shutil
 import sys
 import random
 
@@ -170,6 +171,7 @@ def write_list(data, file_path):
 def create_split_path(sub_dir, split_num):
     # Create split directory
     split_dir = os.path.join(sub_dir, str(split_num))
+    # Todo: split dir is replaced in main. Is this check unecessary?
     if os.path.isdir(split_dir) is False:
         os.mkdir(split_dir)
 
