@@ -2,7 +2,6 @@
 
 import copy
 import json
-import math
 import os
 import sys
 import random
@@ -19,7 +18,7 @@ FALSE_TRIP_RATIO = 'false_triples_ratio'
 TYPE_SPLIT = 'type_split'
 
 TRAIN = 'train.txt'
-TEST =  'test.txt'
+TEST = 'test.txt'
 
 ENTITY_1 = 0
 ENTITY_2 = 2
@@ -30,18 +29,14 @@ RAW_SPLITS_DIR = os.path.join(os.path.dirname(CURRENT_DIR), DATAFILE)
 
 def main():
 
-    # Read arguments
-    config_path = parse_args(sys.argv)
-
     # Load data from arguments
-    config, data, set_of_data = load_data(config_path)
+    config, data, set_of_data = load_data(sys.argv)
 
     # Set the Seed
     seed = config[SEED]
     random.seed(seed)
 
     # Create splits directory
-    dataset_dir = os.path.join(os.path.dirname(CURRENT_DIR), config[DATASET])
     if os.path.isdir(RAW_SPLITS_DIR) is False:
         os.mkdir(RAW_SPLITS_DIR)
 
@@ -53,8 +48,7 @@ def main():
     # Generate and write each split
     create_splits(data, set_of_data, sub_dir, config)
 
-# Check and return arguments
-def parse_args(args):
+def load_data(args):
     args.pop(0)
 
     if(len(args) != 1 or ({'h','help'} & {arg.lower().strip().replace('-', '') for arg in args})):
@@ -62,27 +56,19 @@ def parse_args(args):
         sys.exit(1)
 
     config_file = args.pop(0)
-    return config_file
 
-# Returns Config and the dataset as a list of
-# lists and a set used for checking negative data
-def load_data(config_file):
-    config_fd = open(config_file, 'r')
+    with open(config_file, 'r') as config_fd:
+        config = json.load(config_fd)
 
-    config = json.load(config_fd)
-    config_fd.close()
     data = []
     set_of_data = set()
 
-    data_fd =  open(config[DATAFILE], 'r')
-
-    # Read input file into a list of lines and a set of all entities seen
-    for line in data_fd:
-        line_data = line.strip('\n').split('\t')
-        data.append(line_data)
-        set_of_data.add(tuple(line_data))
-
-    data_fd.close()
+    with open(config[DATAFILE], 'r') as data_fd:
+        # Read input file into a list of lines and a set of all entities seen
+        for line in data_fd:
+            line_data = line.strip('\n').split('\t')
+            data.append(line_data)
+            set_of_data.add(tuple(line_data))
 
     return config, data, set_of_data
 
@@ -97,7 +83,7 @@ def random_splits(data, set_of_data, sub_dir, config):
     # Settings used for splitting the data
     split_num = config[SPLITS]
     percent_train = config[PERCENT_TRAIN]
-    false_triple_ratio =  config[FALSE_TRIP_RATIO]
+    false_triple_ratio = config[FALSE_TRIP_RATIO]
 
     # Copy of valid triples used to allow each split to creat
     permanent_set_of_data = set_of_data
@@ -111,26 +97,26 @@ def random_splits(data, set_of_data, sub_dir, config):
         test_entities = set()
         train_entities = set()
 
-        #reset set of data for checking negative triples
+        # Reset set of data for checking negative triples
         set_of_data = copy.deepcopy(permanent_set_of_data)
 
-        #Generate split paths
+        # Generate split paths
         train_path, test_path = create_split_path(sub_dir, i)
 
         # Split each line into a train or test file
         for line in range(0,  len(data)):
-            choose_split  = random.random()
+            choose_split = random.random()
 
             # Assigns a triple by comparing the random value to the percent
             # of data to be assigned to the training split
             if(choose_split <= percent_train):
-                train.append([data[line][ENTITY_1], data[line][RELATION],  data[line][ENTITY_2], '1'])
+                train.append([data[line][ENTITY_1], data[line][RELATION], data[line][ENTITY_2], '1'])
                 # Add the entities in the triple to the set of
                 # entities used in negative triple generation
                 train_entities.add(data[line][ENTITY_1])
                 train_entities.add(data[line][ENTITY_2])
             else:
-                test.append([data[line][ENTITY_1], data[line][RELATION],  data[line][ENTITY_2], '1'])
+                test.append([data[line][ENTITY_1], data[line][RELATION], data[line][ENTITY_2], '1'])
                 # Add the entities in the triple to the set of
                 # entities used in negative triple generation
                 test_entities.add(data[line][ENTITY_1])
@@ -170,6 +156,7 @@ def generate_negatives(data, entity_list, set_of_data, false_triple_ratio):
 def write_list(data, file_path):
     with open(file_path, 'w+') as out_file:
         # if list of lists
+        # Todo: Is there a better to check if list of lists?
         if isinstance(data[0], list):
             out_file.write('\n'.join(["\t".join(current_list) for current_list in data]))
         # else regular list
@@ -177,13 +164,12 @@ def write_list(data, file_path):
             out_file.write('\n'.join(data))
 
 def create_split_path(sub_dir, split_num):
-    #Create split directory
-    split_dir  = os.path.join(sub_dir, str(split_num))
-    isdir = os.path.isdir(split_dir)
-    if isdir is False:
+    # Create split directory
+    split_dir = os.path.join(sub_dir, str(split_num))
+    if os.path.isdir(split_dir) is False:
         os.mkdir(split_dir)
 
-    #Generate train and test paths for the split
+    # Generate train and test paths for the split
     train_path = os.path.join(split_dir, TRAIN)
     test_path = os.path.join(split_dir, TEST)
     return train_path, test_path
