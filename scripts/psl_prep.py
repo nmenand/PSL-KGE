@@ -82,11 +82,12 @@ def create_mapping_files(dataset_dir):
     makedir(DATA_KGE_DIR)
     # Key = raw_ent/raw_rel
     # Val = mapping
+    # Writes the list of mappings in the form [raw_value,mapping]
     write_data([[ent_mapping[entity], entity] for entity in ent_mapping], os.path.join(DATA_KGE_DIR, ENTITY_MAP))
     write_data([[rel_mapping[relation], relation] for relation in rel_mapping], os.path.join(DATA_KGE_DIR, RELATION_MAP))
 
     return ent_mapping, rel_mapping
-
+# Separates triples into true and false group and maps them
 def separate_triples(raw_split_dir, entity_map, relation_map):
     triple_list = load_helper(os.path.join(raw_split_dir, TRAIN))
 
@@ -99,11 +100,12 @@ def separate_triples(raw_split_dir, entity_map, relation_map):
             false_triples.append(map_raw_triple(triple, entity_map, relation_map))
     return true_triples, false_triples
 
+# Creates and writes observation files for each dimension
 def create_target_files(mapped_triple_list, split_eval_dir):
     target_entities = set()
     target_relations = set()
 
-    # Set target entites and target relations
+    # Get all entities and relations in training split
     for triple in mapped_triple_list:
         if not triple[ENTITY_1] in target_entities:
             target_entities.add(triple[ENTITY_1])
@@ -115,7 +117,7 @@ def create_target_files(mapped_triple_list, split_eval_dir):
     target_entities = list(target_entities)
     target_relations = list(target_relations)
 
-    # Create dimension target files
+    # Create target files for each dimension
     for dimension in range(1, dim_num + 1):
         entity_dim_target_file = os.path.join(split_eval_dir, ENTITYDIM + str(dimension) + TARGET)
         relation_dim_target_file = os.path.join(split_eval_dir, RELATIONDIM + str(dimension) + TARGET)
@@ -171,10 +173,6 @@ def makedir(directory):
 # Helper methods create a list for write_data()
 def map_raw_triple(raw_triple, ent_map, rel_map):
     return [ent_map[raw_triple[ENTITY_1]], rel_map[raw_triple[RELATION]], ent_map[raw_triple[ENTITY_2]]]
-
-# Return positive and negative triples in separate lists
-# Note: SIGN==0 means false triple
-
 
 def _load_args(args):
     executable = args.pop(0)
