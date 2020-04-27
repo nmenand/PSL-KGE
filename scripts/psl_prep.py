@@ -9,13 +9,11 @@ from rule_generation import generate_rules
 
 PSL = "psl"
 DATA = "data"
-CLI  = "cli"
+CLI = "cli"
 KGE = "kge"
 DATA_FILE = "data.txt"
 ENTITY_MAP = "entity_map.txt"
 RELATION_MAP = "relation_map.txt"
-SPLITS = "splits"
-SPLIT = "split"
 TRAIN = "train.txt"
 TEST = "test.txt"
 NEG_TRAIN = "_negative_train.txt"
@@ -60,36 +58,15 @@ def main(dataset_name, dim_num, split_num):
         makedir(split_eval_dir)
         makedir(split_learn_dir)
 
-        # Load train triples & test triples of current split
-        raw_split_train_triples = load_helper(os.path.join(raw_split_dir, TRAIN))
+        # Separate positive and negative triples from train file
+        mapped_pos_train_triples, mapped_neg_train_triples = separate_triples(raw_split_dir, entity_map, relation_map)
 
-        train_triples, neg_train_triples = separate_triples(raw_split_train_triples, entity_map, relation_map)
+        # Create trueblock_obs & falseblock_obs
+        write_data(mapped_pos_train_triples, os.path.join(split_eval_dir, TRUE_BLOCK))
+        write_data(mapped_neg_train_triples, os.path.join(split_eval_dir, FALSE_BLOCK))
 
-        # Create trueblock_obs & falseblock for eval
-        write_data(train_triples, os.path.join(split_eval_dir, TRUE_BLOCK))
-        write_data(neg_train_triples, os.path.join(split_eval_dir, FALSE_BLOCK))
-
-        # Get all entities and relations in current split. Target files contain only
-        # entities and relations present in split_train file.
-        target_entity_tracker = {}
-        target_relation_tracker = {}
-        for triple in train_triples:
-            if not triple[ENTITY_1] in target_entity_tracker:
-                target_entity_tracker[triple[ENTITY_1]] = None
-            if not triple[RELATION] in target_relation_tracker:
-                target_relation_tracker[triple[RELATION]] = None
-            if not triple[ENTITY_2] in target_entity_tracker:
-                target_entity_tracker[triple[ENTITY_2]] = None
-
-        target_entities = [entity for entity in target_entity_tracker]
-        target_relations = [relation for relation in target_relation_tracker]
-
-        # Create dimension target files
-        for dimension in range(1, dim_num + 1):
-            entity_dim_target = os.path.join(split_eval_dir, ENTITYDIM + str(dimension) + TARGET)
-            relation_dim_target = os.path.join(split_eval_dir, RELATIONDIM + str(dimension) + TARGET)
-            write_data(target_entities, entity_dim_target)
-            write_data(target_relations, relation_dim_target)
+        # Target files contain only entities and relations present in current split
+        create_target_files(mapped_pos_train_triples, split_eval_dir)
 
         # Generate and write rules
         psl_rules_target = os.path.join(CLI_DIR, RULES_PSL)
@@ -109,6 +86,29 @@ def create_mapping_files(dataset_dir):
     write_data([[rel_mapping[relation], relation] for relation in rel_mapping], os.path.join(DATA_KGE_DIR, RELATION_MAP))
 
     return ent_mapping, rel_mapping
+
+def create_target_files(mapped_triple_list, split_eval_dir):
+    target_entities = set()
+    target_relations = set()
+
+    # Set target entites and target relations
+    for triple in mapped_triple_list:
+        if not triple[ENTITY_1] in target_entities:
+            target_entities.add(triple[ENTITY_1])
+        if not triple[ENTITY_2] in target_entities:
+            target_entities.add(triple[ENTITY_2])
+        if not triple[RELATION] in target_relations:
+            target_relations.add(triple[RELATION])
+    
+    target_entities = list(target_entities)
+    target_relations = list(target_relations)
+    
+    # Create dimension target files
+    for dimension in range(1, dim_num + 1):
+        entity_dim_target_file = os.path.join(split_eval_dir, ENTITYDIM + str(dimension) + TARGET)
+        relation_dim_target_file = os.path.join(split_eval_dir, RELATIONDIM + str(dimension) + TARGET)
+        write_data(target_entities, entity_dim_target_file)
+        write_data(target_relations, relation_dim_target_file)
 
 # Writes a list of data to a file
 def write_data(data, file_path):
@@ -130,7 +130,6 @@ def load_helper(data_file):
     return helper
 
 # Map entities and relations to integers
-# Modifies triple_list to its mapped equivalent
 def map_constituents(triple_list):
     entity_map = {}
     relation_map = {}
@@ -140,15 +139,12 @@ def map_constituents(triple_list):
         if not triple[ENTITY_1] in entity_map:
             entity_map[triple[ENTITY_1]] = str(entity_count)
             entity_count += 1
-        triple[ENTITY_1] = entity_map[triple[ENTITY_1]]
         if not triple[RELATION] in relation_map:
             relation_map[triple[RELATION]] = str(relation_count)
             relation_count += 1
-        triple[RELATION] = relation_map[triple[RELATION]]
         if not triple[ENTITY_2] in entity_map:
             entity_map[triple[ENTITY_2]] = str(entity_count)
             entity_count += 1
-        triple[ENTITY_2] = entity_map[triple[ENTITY_2]]
 
     return entity_map, relation_map
 
@@ -162,11 +158,13 @@ def map_raw_triple(raw_triple, ent_map, rel_map):
     return [ent_map[raw_triple[ENTITY_1]], rel_map[raw_triple[RELATION]], ent_map[raw_triple[ENTITY_2]]]
 
 # Return positive and negative triples in separate lists
-# Note: SIGN=0 means false triple
-def separate_triples(all_triples, entity_map, relation_map):
+# Note: SIGN==0 means false triple
+def separate_triples(raw_split_dir, entity_map, relation_map):
+    triple_list = load_helper(os.path.join(raw_split_dir, TRAIN))
+
     true_triples = []
     false_triples = []
-    for triple in all_triples:
+    for triple in triple_list:
         if int(triple[SIGN]):
             true_triples.append(map_raw_triple(triple, entity_map, relation_map))
         else:
