@@ -87,6 +87,18 @@ def create_mapping_files(dataset_dir):
 
     return ent_mapping, rel_mapping
 
+def separate_triples(raw_split_dir, entity_map, relation_map):
+    triple_list = load_helper(os.path.join(raw_split_dir, TRAIN))
+
+    true_triples = []
+    false_triples = []
+    for triple in triple_list:
+        if int(triple[SIGN]):
+            true_triples.append(map_raw_triple(triple, entity_map, relation_map))
+        else:
+            false_triples.append(map_raw_triple(triple, entity_map, relation_map))
+    return true_triples, false_triples
+
 def create_target_files(mapped_triple_list, split_eval_dir):
     target_entities = set()
     target_relations = set()
@@ -159,17 +171,7 @@ def map_raw_triple(raw_triple, ent_map, rel_map):
 
 # Return positive and negative triples in separate lists
 # Note: SIGN==0 means false triple
-def separate_triples(raw_split_dir, entity_map, relation_map):
-    triple_list = load_helper(os.path.join(raw_split_dir, TRAIN))
 
-    true_triples = []
-    false_triples = []
-    for triple in triple_list:
-        if int(triple[SIGN]):
-            true_triples.append(map_raw_triple(triple, entity_map, relation_map))
-        else:
-            false_triples.append(map_raw_triple(triple, entity_map, relation_map))
-    return true_triples, false_triples
 
 def _load_args(args):
     executable = args.pop(0)
