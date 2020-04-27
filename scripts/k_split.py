@@ -50,21 +50,18 @@ def main():
 
 def load_data(args):
     args.pop(0)
-
     if(len(args) != 1 or ({'h','help'} & {arg.lower().strip().replace('-', '') for arg in args})):
         print("Usage: python3 gen_splits.py <path_to_config_file>")
         sys.exit(1)
 
     config_file = args.pop(0)
-
     with open(config_file, 'r') as config_fd:
         config = json.load(config_fd)
 
     data = []
     set_of_data = set()
-
     with open(config[DATAFILE], 'r') as data_fd:
-        # Read input file into a list of lines and a set of all entities seen
+        # Read input file into a list of lists and a set of all entities seen
         for line in data_fd:
             line_data = line.strip('\n').split('\t')
             data.append(line_data)
@@ -160,8 +157,10 @@ def generate_negatives(data, entity_list, set_of_data, false_triple_ratio):
 
 def write_list(data, file_path):
     with open(file_path, 'w+') as out_file:
+        # if list is empty
+        if not data:
+            return
         # if list of lists
-        # Todo: Is there a better to check if list of lists?
         if isinstance(data[0], list):
             out_file.write('\n'.join(["\t".join(current_list) for current_list in data]))
         # else regular list
