@@ -42,7 +42,7 @@ DATA_KGE_DIR = os.path.join(PSL_DATA_DIR, KGE)
 def main(dataset_name, dim_num, split_num):
     dataset_dir = os.path.join(os.path.dirname(BASE_DIR), dataset_name)
     dataset_splits_dir = os.path.join(RAW_DATA_DIR, dataset_name)
-    
+
     # Create mapping files and return mappings
     entity_map, relation_map = create_mapping_files(dataset_dir)
 
@@ -111,10 +111,10 @@ def create_target_files(mapped_triple_list, split_eval_dir):
             target_entities.add(triple[ENTITY_2])
         if not triple[RELATION] in target_relations:
             target_relations.add(triple[RELATION])
-    
+
     target_entities = list(target_entities)
     target_relations = list(target_relations)
-    
+
     # Create dimension target files
     for dimension in range(1, dim_num + 1):
         entity_dim_target_file = os.path.join(split_eval_dir, ENTITYDIM + str(dimension) + TARGET)
@@ -125,8 +125,11 @@ def create_target_files(mapped_triple_list, split_eval_dir):
 # Writes a list of data to a file
 def write_data(data, file_path):
     with open(file_path, 'w+') as out_file:
+        # if list is empty
+        if not data:
+            return
         # if list of lists
-        if isinstance(data[0], list):
+        elif isinstance(data[0], list):
             out_file.write('\n'.join(["\t".join(current_list) for current_list in data]))
         # else regular list
         else:
