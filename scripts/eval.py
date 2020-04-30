@@ -155,7 +155,7 @@ def main(config):
 
     test_all(dimensions, ent_embeddings, rel_embeddings)
 
-    predict_links(ent_embeddings, rel_embeddings, entity_list, data[0:50], set_of_data)
+    predict_links(ent_embeddings, rel_embeddings, entity_list, data, set_of_data)
 
 def _load_args(args):
     executable = args.pop(0)
