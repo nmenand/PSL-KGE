@@ -36,14 +36,18 @@ Call gen_splits.sh with config.json as the only argument to generate splits
 
 ./gen_splits.sh config.json
 
-Call prepare_psl.sh with config.json as the only argument to convert the data into PSL form
+Call run.sh with a name for the output
+
+./run.sh results_directory
+
+Alternatively, call prepare_psl.sh with config.json as the only argument to convert the data into PSL form
 
 ./prepare_psl.sh config.json
 
-Call run.sh located in the /psl/cli folder to run psl on the project
+Then call run.sh located in the /psl/cli folder to run psl on the project
 
 ./psl/cli/run.sh
 
-Call eval.sh with config.json and a triple as arguments to evaluate the given triple. 
+Finally, call eval.sh with config.json
 
-./psl/cli/run.sh config.json entity_1 relation entity_2
+./psl/cli/run.sh config.json
