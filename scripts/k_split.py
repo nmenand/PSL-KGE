@@ -15,11 +15,13 @@ SPLITS = 'splits'
 DATASET = 'dataset'
 DATAFILE = 'data'
 PERCENT_TRAIN = 'percent_train'
+PERCENT_VALID = 'percent_valid'
 FALSE_TRIP_RATIO = 'false_triples_ratio'
 TYPE_SPLIT = 'type_split'
 
 TRAIN = 'train.txt'
 TEST = 'test.txt'
+VALID = 'valid.txt'
 
 ENTITY_1 = 0
 ENTITY_2 = 2
@@ -85,6 +87,7 @@ def random_splits(data, set_of_data, sub_dir, config):
     # Settings used for splitting the data
     split_num = config[SPLITS]
     percent_train = config[PERCENT_TRAIN]
+    percent_valid = config[PERCENT_VALID]
     false_triple_ratio = config[FALSE_TRIP_RATIO]
 
     # Copy of valid triples used to allow each split to creat
@@ -94,16 +97,18 @@ def random_splits(data, set_of_data, sub_dir, config):
         # Lists used to store output
         train = []
         test = []
+        valid = []
 
         # Set of entities unique to each split
         test_entities = set()
         train_entities = set()
+        valid_entities = set()
 
         # Reset set of data for checking negative triples
         set_of_data = copy.deepcopy(permanent_set_of_data)
 
         # Generate split paths
-        train_path, test_path = create_split_path(sub_dir, i)
+        train_path, test_path, valid_path = create_split_path(sub_dir, i)
 
         # Split each line into a train or test file
         for line in range(0,  len(data)):
@@ -113,23 +118,28 @@ def random_splits(data, set_of_data, sub_dir, config):
             # of data to be assigned to the training split
             if(choose_split <= percent_train):
                 train.append([data[line][ENTITY_1], data[line][RELATION], data[line][ENTITY_2], '1'])
-                # Add the entities in the triple to the set of
-                # entities used in negative triple generation
-                train_entities.add(data[line][ENTITY_1])
-                train_entities.add(data[line][ENTITY_2])
+                # Add the entities in the triple to the set of entities seen,
+                # which are used for negative triple generation
+                train_entities.update([data[line][ENTITY_1], data[line][ENTITY_2]])
+            elif(choose_split <= (percent_train + percent_valid)):
+                valid.append([data[line][ENTITY_1], data[line][RELATION], data[line][ENTITY_2], '1'])
+                # Add the entities in the triple to the set of entities seen,
+                # which are used for negative triple generation
+                valid_entities.update([data[line][ENTITY_1], data[line][ENTITY_2]])
             else:
                 test.append([data[line][ENTITY_1], data[line][RELATION], data[line][ENTITY_2], '1'])
                 # Add the entities in the triple to the set of
                 # entities used in negative triple generation
-                test_entities.add(data[line][ENTITY_1])
-                test_entities.add(data[line][ENTITY_2])
+                test_entities.update([data[line][ENTITY_1], data[line][ENTITY_2]])
 
         # Generate negative test and train triples and add them to the list of triples
         train.extend(generate_negatives(train, list(train_entities), set_of_data, false_triple_ratio))
         test.extend(generate_negatives(test, list(test_entities), set_of_data, false_triple_ratio))
+        valid.extend(generate_negatives(test, list(valid_entities), set_of_data, false_triple_ratio))
 
         write_list(train, train_path)
         write_list(test, test_path)
+        write_list(valid, valid_path)
 
 # Generates false triples, while avoiding duplicates
 def generate_negatives(data, entity_list, set_of_data, false_triple_ratio):
@@ -177,7 +187,9 @@ def create_split_path(sub_dir, split_num):
     # Generate train and test paths for the split
     train_path = os.path.join(split_dir, TRAIN)
     test_path = os.path.join(split_dir, TEST)
-    return train_path, test_path
+    valid_path = os.path.join(split_dir, VALID)
+
+    return train_path, test_path, valid_path
 
 if __name__ == "__main__":
     main()
