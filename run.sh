@@ -12,6 +12,9 @@ readonly RESULTS_NEG_FILE="negative_evaluated_triples.txt"
 function main() {
    trap exit SIGINT
 
+   # Generate Split
+   generate::splits
+
    # Generate PSL
    generate::psl
 
@@ -23,6 +26,11 @@ function main() {
 
    # Move results
    move::psl $@
+}
+
+function generate::splits() {
+   echo "Generating Splits Files"
+   ${BASE_DIR}/gen_splits.sh config.json
 }
 
 function generate::psl() {
@@ -42,7 +50,7 @@ function run::psl() {
 
 function evaluate::psl() {
    echo "Evaluating PSL"
-   ${BASE_DIR}/eval.sh config.json > ${RESULTS_OUTPUT}.out 2> ${RESULTS_OUTPUT}.err
+   ${BASE_DIR}/eval.sh config.json > ${RESULTS_OUTPUT}.txt 2> ${RESULTS_OUTPUT}.err
 }
 
 function move::psl() {

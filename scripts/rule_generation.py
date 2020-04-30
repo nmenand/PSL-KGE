@@ -1,4 +1,6 @@
-ENTITY1_RULE = "1.0: EntityDim"
+TRUE_RULE_WEIGHT = "5.0"
+FALSE_RULE_WEIGHT = "1.0"
+ENTITY1_RULE = ": EntityDim"
 RELATION_RULE = "(e1) + RelationDim"
 ENTITY2_RULE = "(r1) - EntityDim"
 TRUE_RULE = "(e2) + 0*TrueBlock(e1, r1, e2) = 0"
@@ -24,8 +26,8 @@ RELATIONDIM = "relationdim"
 def generate_rules(num_dimensions):
     rule_output = []
     for dim in range(1, num_dimensions+1):
-        rule_output.append(ENTITY1_RULE + str(dim) + RELATION_RULE + str(dim) + ENTITY2_RULE+ str(dim) + TRUE_RULE)
-        rule_output.append(ENTITY1_RULE + str(dim) + RELATION_RULE + str(dim) + ENTITY2_RULE+ str(dim) + FALSE_RULE2)
+        rule_output.append(TRUE_RULE_WEIGHT + ENTITY1_RULE + str(dim) + RELATION_RULE + str(dim) + ENTITY2_RULE+ str(dim) + TRUE_RULE)
+        rule_output.append(FALSE_RULE_WEIGHT + ENTITY1_RULE + str(dim) + RELATION_RULE + str(dim) + ENTITY2_RULE+ str(dim) + FALSE_RULE2)
 
     predicate_output = []
 
