@@ -3,7 +3,10 @@
 import json
 import os
 import math
+import statistics
 import sys
+
+from link_prediction import predict_links
 
 ENTITY_MAP = "psl/data/kge/entity_map.txt"
 RELATION_MAP = "psl/data/kge/relation_map.txt"
@@ -19,13 +22,15 @@ TXT = ".txt"
 DATA = "data"
 DIMENSIONS = "dimensions"
 MAP_INPUT = "map_input"
-TEST_FILE = "/test.txt"
+TEST_FILE = "test.txt"
 DATASET = "dataset"
 SPLIT_NO = "0"
 
 ENTITY_1 = 0
 RELATION = 1
 ENTITY_2 = 2
+# 0 for L1 Norm 1 for L2 norm
+NORM_TYPE = 0
 
 BASE_DIR = os.path.dirname(os.path.realpath(__file__))
 MAPE_DIR = os.path.join(os.path.dirname(BASE_DIR), ENTITY_MAP)
@@ -53,55 +58,83 @@ def write_data(data, file_path):
         else:
             out_file.write('\n'.join(data))
 
-def eval_triple(mapped_e1, mapped_e2, mapped_rel, dimensions, ent_embeddings, rel_embeddings):
-    sum = 0
+def load_data(config):
+    data = []
+    entities = set()
+    set_of_data = set()
+
+    with open(TRUE_DIR, 'r') as data_fd:
+        # Read input file into a list of lines and a set of all entities seen
+        for line in data_fd:
+            line_data = line.strip('\n').split('\t')
+            data.append(line_data)
+            set_of_data.add(tuple(line_data))
+            entities.update([line_data[0], line_data[2]])
+    entity_list = list(entities)
+
+    return data, entity_list, set_of_data
+
+# Returns the L1 and L2 norms centered around 0
+def eval_triple(mapped_e1 , mapped_e2, mapped_rel, dimensions, ent_embeddings, rel_embeddings):
+    L1_norm = 0
+    L2_norm = 0
     for dim in range(1, dimensions+1):
         e1_num = float(ent_embeddings[dim-1][mapped_e1])
         e2_num = float(ent_embeddings[dim-1][mapped_e2])
         rel_num = float(rel_embeddings[dim-1][mapped_rel])
         value = e1_num + rel_num - e2_num
+        L2_norm += value**2
+        L1_norm += value
+    return L1_norm, math.sqrt(L2_norm)
 
-        sum += value**2
-    return math.sqrt(sum)
+def eval_list(dimensions, triples, ent_embeddings, rel_embeddings):
+    eval_data = []
+    total_sum = 0
+    total_energy = 0
+    for triple in triples:
+        mapped_e1 = triple[ENTITY_1]
+        mapped_e2 = triple[ENTITY_2]
+        mapped_rel = triple[RELATION]
 
-# ent_list is a list mapped entities where each entity is of type string
-def link_prediction(ent_embeddings, rel_embeddings, ent_list, mapped_e1, mapped_rel, mapped_e2):
-    original_triple = (mapped_e1, mapped_rel, mapped_e2)
-    ranking_list = []
-    dimensions = len(ent_embeddings)
-    for ent in ent_list:
-        corrupted_e1 = ent
-        score = eval_triple(corrupted_e1, mapped_e2, mapped_rel, dimensions, ent_embeddings, rel_embeddings)
-        ranking_list.append((score, corrupted_e1))
-    ranking_list.sort(key=lambda x: x[0], reverse=True)
-    return ranking_list
+        eval_sum, eval_energy = eval_triple(mapped_e1 , mapped_e2, mapped_rel, dimensions, ent_embeddings, rel_embeddings)
+        triple.append(str(eval_sum))
+        total_sum += eval_sum/dimensions
+        total_energy += eval_energy
+    return total_sum, total_energy, triples
 
-def load_data(config):
-    data = []
-    entities_set = set()
-    set_of_data = set()
-
-    with open(config[DATA], 'r') as data_fd:
-        # Read input file into a list of lines and a set of all entities seen
-        for line in data_fd:
-            parsed_line = line.strip('\n').split('\t')
-            data.append(parsed_line)
-            set_of_data.add(tuple(parsed_line))
-            entities_set.add(parsed_line[2])
-        entity_list = list(entities_set)
-
-    return data, entity_list, set_of_data
-
-def test_all(config, entity_mapping, relation_mapping):
-
-    dimensions = config[DIMENSIONS]
-    pos_sum = 0
+def test_all(dimensions, ent_embeddings, rel_embeddings):
 
     triples = []
-    eval_data = []
     with open(TRUE_DIR, 'r') as trip_fd:
         for line in trip_fd:
             triples.append(line.strip('\n').split('\t'))
+
+    pos_sum, pos_energy, triples = eval_list(dimensions, triples, ent_embeddings, rel_embeddings)
+
+    write_data(triples, POS_OUTPUT_DIR)
+    print("Positive triples total sum is: " + str(pos_sum))
+    print("Positive triples L1 is: " + str(pos_sum/len(triples)))
+    print("Positive triples L2 is: " + str(pos_energy/len(triples)) + "\n")
+
+    triples = []
+    with open(FALSE_DIR, 'r') as trip_fd:
+        for line in trip_fd:
+            triples.append(line.strip('\n').split('\t'))
+
+    neg_sum, neg_energy, triples = eval_list(dimensions, triples, ent_embeddings, rel_embeddings)
+
+    write_data(triples, NEG_OUTPUT_DIR)
+    print("Negative triples total sum is: " + str(neg_sum))
+    print("Negative triples L1 is: " + str(neg_sum/len(triples)))
+    print("Negative triples L2 is: " + str(neg_energy/len(triples)) + "\n")
+
+def main(config):
+
+    data, entity_list, set_of_data = load_data(config)
+    dimensions = config[DIMENSIONS]
+
+    entity_mapping = load_mappings(MAPE_DIR, 1, 0)
+    relation_mapping = load_mappings(MAPR_DIR, 1, 0)
 
     ent_embeddings = []
     rel_embeddings = []
@@ -109,49 +142,9 @@ def test_all(config, entity_mapping, relation_mapping):
         ent_embeddings.append(load_mappings(ENTITY_DIR + str(dim) + TXT, 0, 1))
         rel_embeddings.append(load_mappings(RELATION_DIR + str(dim) + TXT, 0, 1))
 
-    for triple in triples:
-        mapped_e1 = triple[ENTITY_1]
-        mapped_e2 = triple[ENTITY_2]
-        mapped_rel = triple[RELATION]
+    test_all(dimensions, ent_embeddings, rel_embeddings)
 
-        eval = eval_triple(mapped_e1, mapped_e2, mapped_rel, dimensions, ent_embeddings, rel_embeddings)
-        pos_sum += eval
-        triple.append(str(eval))
-        eval_data.append(triple)
-
-    write_data(eval_data, POS_OUTPUT_DIR)
-    print("Positive triples total sum is: " +str(pos_sum))
-    print("Positive triples average is: " +str(pos_sum/len(triples)) + "\n")
-
-    trip_fd = open(FALSE_DIR)
-    triples = []
-    eval_data = []
-    neg_sum = 0
-    for line in trip_fd:
-        triples.append(line.strip('\n').split('\t'))
-    trip_fd.close()
-
-    for triple in triples:
-        mapped_e1 = triple[ENTITY_1]
-        mapped_e2 = triple[ENTITY_2]
-        mapped_rel = triple[RELATION]
-
-        eval = eval_triple(mapped_e1 , mapped_e2, mapped_rel, dimensions, ent_embeddings, rel_embeddings)
-        neg_sum += eval
-        triple.append(str(eval))
-        eval_data.append(triple)
-    write_data(eval_data, NEG_OUTPUT_DIR)
-    print("Negative triples total sum is: " +str(neg_sum))
-    print("Negative triples average is: " +str(neg_sum/len(triples)))
-
-def main(config):
-
-    data, entity_list, set_of_data = load_data(config)
-
-    entity_mapping = load_mappings(MAPE_DIR, 1, 0)
-    relation_mapping = load_mappings(MAPR_DIR, 1, 0)
-
-    test_all(config, entity_mapping, relation_mapping)
+    predict_links(ent_embeddings, rel_embeddings, entity_list, data, set_of_data)
 
 def _load_args(args):
     executable = args.pop(0)
