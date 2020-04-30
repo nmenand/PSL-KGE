@@ -135,7 +135,7 @@ def random_splits(data, set_of_data, sub_dir, config):
         # Generate negative test and train triples and add them to the list of triples
         train.extend(generate_negatives(train, list(train_entities), set_of_data, false_triple_ratio))
         test.extend(generate_negatives(test, list(test_entities), set_of_data, false_triple_ratio))
-        valid.extend(generate_negatives(test, list(valid_entities), set_of_data, false_triple_ratio))
+        valid.extend(generate_negatives(valid, list(valid_entities), set_of_data, false_triple_ratio))
 
         write_list(train, train_path)
         write_list(test, test_path)

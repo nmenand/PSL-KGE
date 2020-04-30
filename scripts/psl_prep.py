@@ -16,6 +16,7 @@ ENTITY_MAP = "entity_map.txt"
 RELATION_MAP = "relation_map.txt"
 TRAIN = "train.txt"
 TEST = "test.txt"
+VALID = "valid.txt"
 NEG_TRAIN = "_negative_train.txt"
 TRUE_BLOCK = "trueblock_obs.txt"
 FALSE_BLOCK = "falseblock_obs.txt"
@@ -59,14 +60,22 @@ def main(dataset_name, dim_num, split_num):
         makedir(split_learn_dir)
 
         # Separate positive and negative triples from train file
-        mapped_pos_train_triples, mapped_neg_train_triples = separate_triples(raw_split_dir, entity_map, relation_map)
+        mapped_pos_train_triples, mapped_neg_train_triples = separate_triples(raw_split_dir, TRAIN, entity_map, relation_map)
 
         # Create trueblock_obs & falseblock_obs
         write_data(mapped_pos_train_triples, os.path.join(split_eval_dir, TRUE_BLOCK))
         write_data(mapped_neg_train_triples, os.path.join(split_eval_dir, FALSE_BLOCK))
 
+        # Separate positive and negative triples from the validation file
+        mapped_pos_valid_triples, mapped_neg_valid_triples = separate_triples(raw_split_dir, VALID, entity_map, relation_map)
+
+        # Create trueblock_obs & falseblock_obs
+        write_data(mapped_pos_valid_triples, os.path.join(split_learn_dir, TRUE_BLOCK))
+        write_data(mapped_neg_valid_triples, os.path.join(split_learn_dir, FALSE_BLOCK))
+
         # Target files contain only entities and relations present in current split
         create_target_files(mapped_pos_train_triples, split_eval_dir)
+        create_target_files(mapped_pos_valid_triples, split_learn_dir)
 
         # Generate and write rules
         psl_rules_target = os.path.join(CLI_DIR, RULES_PSL)
@@ -88,8 +97,8 @@ def create_mapping_files(dataset_dir):
 
     return ent_mapping, rel_mapping
 # Separates triples into true and false group and maps them
-def separate_triples(raw_split_dir, entity_map, relation_map):
-    triple_list = load_helper(os.path.join(raw_split_dir, TRAIN))
+def separate_triples(raw_split_dir, file_name, entity_map, relation_map):
+    triple_list = load_helper(os.path.join(raw_split_dir, file_name))
 
     true_triples = []
     false_triples = []
