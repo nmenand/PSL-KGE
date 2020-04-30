@@ -3,12 +3,10 @@
 import json
 import os
 import math
-import shutil
 import sys
-import random
 
-ENTITY_MAP =  "psl/data/kge/entity_map.txt"
-RELATION_MAP =  "psl/data/kge/relation_map.txt"
+ENTITY_MAP = "psl/data/kge/entity_map.txt"
+RELATION_MAP = "psl/data/kge/relation_map.txt"
 ENTITY_DIM = "psl/cli/inferred-predicates/ENTITYDIM"
 RELATION_DIM = "psl/cli/inferred-predicates/RELATIONDIM"
 PSL_DATA_DIR = "psl/data/kge/"
@@ -40,23 +38,22 @@ TRUE_DIR = os.path.join(DATA_DIR, PSL_DATA_DIR + SPLIT_NO + TRUEBLOCK_DIR)
 FALSE_DIR = os.path.join(DATA_DIR, PSL_DATA_DIR + SPLIT_NO + FALSEBLOCK_DIR)
 
 def load_mappings(file_name, key, value):
-    map = {}
-    map_file = open(file_name)
-    for line in map_file:
-        map[line.strip('\n').split('\t')[key]] = line.strip('\n').split('\t')[value]
-    map_file.close()
-    return map
+    mapping = {}
+    with open(file_name) as map_file:
+        for line in map_file:
+            mapping[line.strip('\n').split('\t')[key]] = line.strip('\n').split('\t')[value]
+    return mapping
 
 def write_data(data, file_path):
-	with open(file_path, 'w+') as out_file:
-		# if list of lists
-		if isinstance(data[0], list):
-			out_file.write('\n'.join(["\t".join(current_list) for current_list in data]))
-		# else regular list
-		else:
-			out_file.write('\n'.join(data))
+    with open(file_path, 'w+') as out_file:
+        # if list of lists
+        if isinstance(data[0], list):
+            out_file.write('\n'.join(["\t".join(current_list) for current_list in data]))
+        # else regular list
+        else:
+            out_file.write('\n'.join(data))
 
-def eval_triple(mapped_e1 , mapped_e2, mapped_rel, dimensions, ent_embeddings, rel_embeddings):
+def eval_triple(mapped_e1, mapped_e2, mapped_rel, dimensions, ent_embeddings, rel_embeddings):
     sum = 0
     for dim in range(1, dimensions+1):
         e1_num = float(ent_embeddings[dim-1][mapped_e1])
@@ -81,19 +78,18 @@ def link_prediction(ent_embeddings, rel_embeddings, ent_list, mapped_e1, mapped_
 
 def load_data(config):
     data = []
-    entities = set()
+    entities_set = set()
     set_of_data = set()
 
-    data_fd =  open(config[DATA], 'r')
+    with open(config[DATA], 'r') as data_fd:
+        # Read input file into a list of lines and a set of all entities seen
+        for line in data_fd:
+            parsed_line = line.strip('\n').split('\t')
+            data.append(parsed_line)
+            set_of_data.add(tuple(parsed_line))
+            entities_set.add(parsed_line[2])
+        entity_list = list(entities_set)
 
-    # Read input file into a list of lines and a set of all entities seen
-    for line in data_fd:
-        data.append(line.strip('\n').split('\t'))
-        set_of_data.add(tuple(line.strip('\n').split('\t')))
-        entities.add(line.strip('\n').split('\t')[2])
-    entity_list = list(entities)
-
-    data_fd.close()
     return data, entity_list, set_of_data
 
 def test_all(config, entity_mapping, relation_mapping):
@@ -101,12 +97,11 @@ def test_all(config, entity_mapping, relation_mapping):
     dimensions = config[DIMENSIONS]
     pos_sum = 0
 
-    trip_fd = open(TRUE_DIR)
     triples = []
     eval_data = []
-    for line in trip_fd:
-        triples.append(line.strip('\n').split('\t'))
-    trip_fd.close()
+    with open(TRUE_DIR, 'r') as trip_fd:
+        for line in trip_fd:
+            triples.append(line.strip('\n').split('\t'))
 
     ent_embeddings = []
     rel_embeddings = []
@@ -119,8 +114,8 @@ def test_all(config, entity_mapping, relation_mapping):
         mapped_e2 = triple[ENTITY_2]
         mapped_rel = triple[RELATION]
 
-        eval = eval_triple(mapped_e1 , mapped_e2, mapped_rel, dimensions, ent_embeddings, rel_embeddings)
-        pos_sum+= eval
+        eval = eval_triple(mapped_e1, mapped_e2, mapped_rel, dimensions, ent_embeddings, rel_embeddings)
+        pos_sum += eval
         triple.append(str(eval))
         eval_data.append(triple)
 
@@ -152,7 +147,6 @@ def test_all(config, entity_mapping, relation_mapping):
 def main(config):
 
     data, entity_list, set_of_data = load_data(config)
-    dimensions = config[DIMENSIONS]
 
     entity_mapping = load_mappings(MAPE_DIR, 1, 0)
     relation_mapping = load_mappings(MAPR_DIR, 1, 0)
