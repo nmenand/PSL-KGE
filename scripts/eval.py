@@ -13,8 +13,8 @@ RELATION_MAP = "psl/data/kge/relation_map.txt"
 ENTITY_DIM = "psl/cli/inferred-predicates/ENTITYDIM"
 RELATION_DIM = "psl/cli/inferred-predicates/RELATIONDIM"
 PSL_DATA_DIR = "psl/data/kge/"
-TRUEBLOCK_DIR = "/eval/trueblock_obs.txt"
-FALSEBLOCK_DIR = "/eval/falseblock_obs.txt"
+TRUEBLOCK_DIR = "/learn/trueblock_obs.txt"
+FALSEBLOCK_DIR = "/learn/falseblock_obs.txt"
 POS_OUTPUT_DIR = "positive_evaluated_triples.txt"
 NEG_OUTPUT_DIR = "negative_evaluated_triples.txt"
 
@@ -79,12 +79,15 @@ def eval_triple(mapped_e1 , mapped_e2, mapped_rel, dimensions, ent_embeddings, r
     L1_norm = 0
     L2_norm = 0
     for dim in range(1, dimensions+1):
-        e1_num = float(ent_embeddings[dim-1][mapped_e1])
-        e2_num = float(ent_embeddings[dim-1][mapped_e2])
-        rel_num = float(rel_embeddings[dim-1][mapped_rel])
-        value = e1_num + rel_num - e2_num
-        L2_norm += value**2
-        L1_norm += value
+        try:
+               e1_num = float(ent_embeddings[dim-1][mapped_e1])
+               e2_num = float(ent_embeddings[dim-1][mapped_e2])
+               rel_num = float(rel_embeddings[dim-1][mapped_rel])
+               value = e1_num + rel_num - e2_num
+               L2_norm += value**2
+               L1_norm += value
+        except:
+	        return 0,0
     return L1_norm, math.sqrt(L2_norm)
 
 def eval_list(dimensions, triples, ent_embeddings, rel_embeddings):

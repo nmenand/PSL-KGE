@@ -10,12 +10,15 @@ def eval_triple(mapped_e1 , mapped_e2, mapped_rel, dimensions, ent_embeddings, r
     L1_norm = 0
     L2_norm = 0
     for dim in range(1, dimensions+1):
-        e1_num = float(ent_embeddings[dim-1][mapped_e1])
-        e2_num = float(ent_embeddings[dim-1][mapped_e2])
-        rel_num = float(rel_embeddings[dim-1][mapped_rel])
-        value = e1_num + rel_num - e2_num
-        L2_norm += value**2
-        L1_norm += value
+        try:
+            e1_num = float(ent_embeddings[dim-1][mapped_e1])
+            e2_num = float(ent_embeddings[dim-1][mapped_e2])
+            rel_num = float(rel_embeddings[dim-1][mapped_rel])
+            value = e1_num + rel_num - e2_num
+            L2_norm += value**2
+            L1_norm += value
+        except:
+            return 0,0
     return L1_norm, L2_norm
 
 # generate rankings
