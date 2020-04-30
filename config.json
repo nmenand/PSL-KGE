@@ -1,12 +1,13 @@
 {
 	"splits": 10,
 	"percent_train": 0.70,
+	"percent_valid": 0.15,
 	"seed": 12345,
 	"output": null,
-	"false_triples_ratio": 1,
+	"false_triples_ratio": 5,
 	"dataset": "WN18",
 	"data": "WN18/data.txt",
-	"dimensions": 3,
+	"dimensions": 5,
 	"type_split": "random",
 	"map_input": 1
 }
