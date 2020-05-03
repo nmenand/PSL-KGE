@@ -1,4 +1,4 @@
-TRUE_RULE_WEIGHT = "5.0"
+TRUE_RULE_WEIGHT = "3.0"
 FALSE_RULE_WEIGHT = "1.0"
 ENTITY1_RULE = ": EntityDim"
 RELATION_RULE = "(e1) + RelationDim"
