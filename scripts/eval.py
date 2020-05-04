@@ -84,18 +84,18 @@ def eval_triple(mapped_e1 , mapped_e2, mapped_rel, dimensions, ent_embeddings, r
     L2_norm = 0
     for dim in range(1, dimensions+1):
         try:
-               e1_num = float(ent_embeddings[dim-1][mapped_e1])
-               e2_num = float(ent_embeddings[dim-1][mapped_e2])
-               rel_num = float(rel_embeddings[dim-1][mapped_rel])
-               value = e1_num + rel_num - e2_num
-               L2_norm += value**2
-               L1_norm += abs(value)
+            e1_num = float(ent_embeddings[dim-1][mapped_e1])
+            e2_num = float(ent_embeddings[dim-1][mapped_e2])
+            rel_num = float(rel_embeddings[dim-1][mapped_rel])
+            value = e1_num + rel_num - e2_num
+            L2_norm += value**2
+            L1_norm += abs(value)
         except:
-	        return None, None
+            # Catch key errors if unseen ent/rel
+            return None, None
     return L1_norm, math.sqrt(L2_norm)
 
-def eval_list(dimensions, triples, ent_embeddings, rel_embeddings):
-    eval_data = []
+def eval_list(dimensions, ent_embeddings, rel_embeddings):
     total_sum = 0
     total_energy = 0
     for triple in triples:
@@ -103,12 +103,12 @@ def eval_list(dimensions, triples, ent_embeddings, rel_embeddings):
         mapped_e2 = triple[ENTITY_2]
         mapped_rel = triple[RELATION]
 
-        eval_sum, eval_energy = eval_triple(mapped_e1 , mapped_e2, mapped_rel, dimensions, ent_embeddings, rel_embeddings)
-        if eval_sum != None:
-            triple.append(str(eval_sum))
-            total_sum += eval_sum/dimensions
-            total_energy += eval_energy
-    return total_sum, total_energy, triples
+        L1_norm, L2_norm = eval_triple(mapped_e1 , mapped_e2, mapped_rel, dimensions, ent_embeddings, rel_embeddings)
+        if L1_norm is not None:
+            triple.append(str(L1_norm))
+            total_sum += L1_norm/dimensions
+            total_energy += L2_norm
+    return total_sum, total_energy
 
 def test_all(dimensions, ent_embeddings, rel_embeddings):
 
@@ -117,7 +117,7 @@ def test_all(dimensions, ent_embeddings, rel_embeddings):
         for line in trip_fd:
             triples.append(line.strip('\n').split('\t'))
 
-    pos_sum, pos_energy, triples = eval_list(dimensions, triples, ent_embeddings, rel_embeddings)
+    pos_sum, pos_energy = eval_list(dimensions, triples, ent_embeddings, rel_embeddings)
 
     write_data(triples, POS_OUTPUT_DIR)
     print("Positive triples total sum is: " + str(pos_sum))
@@ -129,7 +129,7 @@ def test_all(dimensions, ent_embeddings, rel_embeddings):
         for line in trip_fd:
             triples.append(line.strip('\n').split('\t'))
     if(len(triples) > 0):
-        neg_sum, neg_energy, triples = eval_list(dimensions, triples, ent_embeddings, rel_embeddings)
+        neg_sum, neg_energy = eval_list(dimensions, triples, ent_embeddings, rel_embeddings)
 
         write_data(triples, NEG_OUTPUT_DIR)
         print("Negative triples total sum is: " + str(neg_sum))
