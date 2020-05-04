@@ -1,5 +1,4 @@
 #!bin/usr/env python3
-import math
 import statistics
 
 # 0 for L1 norm, 1 for L2 norm
@@ -18,8 +17,8 @@ def eval_triple(mapped_e1 , mapped_e2, mapped_rel, dimensions, ent_embeddings, r
             L2_norm += value**2
             L1_norm += abs(value)
         except:
-	        return None, None
-    return L1_norm, math.sqrt(L2_norm)
+            return None, None
+    return L1_norm, L2_norm**(0.5)
 
 # generate rankings
 def generate_link_ranking(ent_embeddings, rel_embeddings, ent_list, mapped_e1, mapped_rel, mapped_e2):

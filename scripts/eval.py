@@ -2,8 +2,6 @@
 
 import json
 import os
-import math
-import statistics
 import sys
 
 from link_prediction import predict_links
@@ -93,9 +91,9 @@ def eval_triple(mapped_e1 , mapped_e2, mapped_rel, dimensions, ent_embeddings, r
         except:
             # Catch key errors if unseen ent/rel
             return None, None
-    return L1_norm, math.sqrt(L2_norm)
+    return L1_norm, L2_norm**(0.5)
 
-def eval_list(dimensions, ent_embeddings, rel_embeddings):
+def eval_list(dimensions, triples, ent_embeddings, rel_embeddings):
     total_sum = 0
     total_energy = 0
     for triple in triples:
