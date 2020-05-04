@@ -13,7 +13,9 @@ RELATION_MAP = "psl/data/kge/relation_map.txt"
 ENTITY_DIM = "psl/cli/inferred-predicates/ENTITYDIM"
 RELATION_DIM = "psl/cli/inferred-predicates/RELATIONDIM"
 PSL_DATA_DIR = "psl/data/kge/"
+ENTITY_DIR = ""
 TRUEBLOCK_DIR = "/learn/trueblock_obs.txt"
+BLOCK_DIR = "/eval/trueblock_obs.txt"
 FALSEBLOCK_DIR = "/learn/falseblock_obs.txt"
 POS_OUTPUT_DIR = "positive_evaluated_triples.txt"
 NEG_OUTPUT_DIR = "negative_evaluated_triples.txt"
@@ -40,6 +42,7 @@ ENTITY_DIR = os.path.join(os.path.dirname(BASE_DIR), ENTITY_DIM)
 RELATION_DIR = os.path.join(os.path.dirname(BASE_DIR), RELATION_DIM)
 DATA_DIR = os.path.dirname(BASE_DIR)
 TRUE_DIR = os.path.join(DATA_DIR, PSL_DATA_DIR + SPLIT_NO + TRUEBLOCK_DIR)
+MORE_DATA_DIR = os.path.join(DATA_DIR, PSL_DATA_DIR + SPLIT_NO + TRUEBLOCK_DIR)
 FALSE_DIR = os.path.join(DATA_DIR, PSL_DATA_DIR + SPLIT_NO + FALSEBLOCK_DIR)
 
 def load_mappings(file_name, key, value):
@@ -51,12 +54,13 @@ def load_mappings(file_name, key, value):
 
 def write_data(data, file_path):
     with open(file_path, 'w+') as out_file:
-        # if list of lists
-        if isinstance(data[0], list):
-            out_file.write('\n'.join(["\t".join(current_list) for current_list in data]))
-        # else regular list
-        else:
-            out_file.write('\n'.join(data))
+        if data:
+            # if list of lists
+            if isinstance(data[0], list):
+                out_file.write('\n'.join(["\t".join(current_list) for current_list in data]))
+                # else regular list
+            else:
+                out_file.write('\n'.join(data))
 
 def load_data(config):
     data = []
@@ -85,9 +89,9 @@ def eval_triple(mapped_e1 , mapped_e2, mapped_rel, dimensions, ent_embeddings, r
                rel_num = float(rel_embeddings[dim-1][mapped_rel])
                value = e1_num + rel_num - e2_num
                L2_norm += value**2
-               L1_norm += value
+               L1_norm += abs(value)
         except:
-	        return 0,0
+	        return None, None
     return L1_norm, math.sqrt(L2_norm)
 
 def eval_list(dimensions, triples, ent_embeddings, rel_embeddings):
@@ -100,9 +104,10 @@ def eval_list(dimensions, triples, ent_embeddings, rel_embeddings):
         mapped_rel = triple[RELATION]
 
         eval_sum, eval_energy = eval_triple(mapped_e1 , mapped_e2, mapped_rel, dimensions, ent_embeddings, rel_embeddings)
-        triple.append(str(eval_sum))
-        total_sum += eval_sum/dimensions
-        total_energy += eval_energy
+        if eval_sum != None:
+            triple.append(str(eval_sum))
+            total_sum += eval_sum/dimensions
+            total_energy += eval_energy
     return total_sum, total_energy, triples
 
 def test_all(dimensions, ent_embeddings, rel_embeddings):
@@ -123,13 +128,13 @@ def test_all(dimensions, ent_embeddings, rel_embeddings):
     with open(FALSE_DIR, 'r') as trip_fd:
         for line in trip_fd:
             triples.append(line.strip('\n').split('\t'))
+    if(len(triples) > 0):
+        neg_sum, neg_energy, triples = eval_list(dimensions, triples, ent_embeddings, rel_embeddings)
 
-    neg_sum, neg_energy, triples = eval_list(dimensions, triples, ent_embeddings, rel_embeddings)
-
-    write_data(triples, NEG_OUTPUT_DIR)
-    print("Negative triples total sum is: " + str(neg_sum))
-    print("Negative triples L1 is: " + str(neg_sum/len(triples)))
-    print("Negative triples L2 is: " + str(neg_energy/len(triples)) + "\n")
+        write_data(triples, NEG_OUTPUT_DIR)
+        print("Negative triples total sum is: " + str(neg_sum))
+        print("Negative triples L1 is: " + str(neg_sum/len(triples)))
+        print("Negative triples L2 is: " + str(neg_energy/len(triples)) + "\n")
 
 def main(config):
 
