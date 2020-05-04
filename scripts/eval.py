@@ -6,24 +6,17 @@ import sys
 
 from link_prediction import predict_links
 
-ENTITY_MAP = "psl/data/kge/entity_map.txt"
-RELATION_MAP = "psl/data/kge/relation_map.txt"
 ENTITY_DIM = "psl/cli/inferred-predicates/ENTITYDIM"
 RELATION_DIM = "psl/cli/inferred-predicates/RELATIONDIM"
 PSL_DATA_DIR = "psl/data/kge/"
 ENTITY_DIR = ""
 TRUEBLOCK_DIR = "/learn/trueblock_obs.txt"
-BLOCK_DIR = "/eval/trueblock_obs.txt"
 FALSEBLOCK_DIR = "/learn/falseblock_obs.txt"
 POS_OUTPUT_DIR = "positive_evaluated_triples.txt"
 NEG_OUTPUT_DIR = "negative_evaluated_triples.txt"
 
 TXT = ".txt"
-DATA = "data"
 DIMENSIONS = "dimensions"
-MAP_INPUT = "map_input"
-TEST_FILE = "test.txt"
-DATASET = "dataset"
 SPLIT_NO = "0"
 
 ENTITY_1 = 0
@@ -33,8 +26,6 @@ ENTITY_2 = 2
 NORM_TYPE = 0
 
 BASE_DIR = os.path.dirname(os.path.realpath(__file__))
-MAPE_DIR = os.path.join(os.path.dirname(BASE_DIR), ENTITY_MAP)
-MAPR_DIR = os.path.join(os.path.dirname(BASE_DIR), RELATION_MAP)
 
 ENTITY_DIR = os.path.join(os.path.dirname(BASE_DIR), ENTITY_DIM)
 RELATION_DIR = os.path.join(os.path.dirname(BASE_DIR), RELATION_DIM)
@@ -43,7 +34,7 @@ TRUE_DIR = os.path.join(DATA_DIR, PSL_DATA_DIR + SPLIT_NO + TRUEBLOCK_DIR)
 MORE_DATA_DIR = os.path.join(DATA_DIR, PSL_DATA_DIR + SPLIT_NO + TRUEBLOCK_DIR)
 FALSE_DIR = os.path.join(DATA_DIR, PSL_DATA_DIR + SPLIT_NO + FALSEBLOCK_DIR)
 
-def load_mappings(file_name, key, value):
+def load_embeddings(file_name, key, value):
     mapping = {}
     with open(file_name) as map_file:
         for line in map_file:
@@ -142,8 +133,8 @@ def main(config):
     ent_embeddings = []
     rel_embeddings = []
     for dim in range(1, dimensions+1):
-        ent_embeddings.append(load_mappings(ENTITY_DIR + str(dim) + TXT, 0, 1))
-        rel_embeddings.append(load_mappings(RELATION_DIR + str(dim) + TXT, 0, 1))
+        ent_embeddings.append(load_embeddings(ENTITY_DIR + str(dim) + TXT, 0, 1))
+        rel_embeddings.append(load_embeddings(RELATION_DIR + str(dim) + TXT, 0, 1))
 
     test_all(dimensions, ent_embeddings, rel_embeddings)
 
@@ -158,7 +149,7 @@ def _load_args(args):
     config_file = args.pop(0)
     with open(config_file, 'r') as config_fd:
         config = json.load(config_fd)
-        return config
+    return config
 
 if __name__ == '__main__':
     config = _load_args(sys.argv)

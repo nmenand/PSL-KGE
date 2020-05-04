@@ -18,6 +18,8 @@ PERCENT_TRAIN = 'percent_train'
 PERCENT_VALID = 'percent_valid'
 FALSE_TRIP_RATIO = 'false_triples_ratio'
 TYPE_SPLIT = 'type_split'
+ENTITY_MAP = "entity_map.txt"
+RELATION_MAP = "relation_map.txt"
 
 TRAIN = 'train.txt'
 TEST = 'test.txt'
@@ -45,7 +47,12 @@ def main():
 
     # Create a directory for the specific dataset
     sub_dir = os.path.join(RAW_SPLITS_DIR, config[DATASET])
-    create_dir(sub_dir)
+    # Delete previous dataset raw splits if they exist.
+    if os.path.exists(sub_dir):
+        shutil.rmtree(sub_dir)
+    os.mkdir(sub_dir)
+
+    create_mapping_files(data, sub_dir)
 
     # Generate and write each split
     create_splits(data, set_of_data, sub_dir, config)
@@ -71,10 +78,33 @@ def load_data(args):
 
     return config, data, set_of_data
 
-def create_dir(directory):
-    if os.path.exists(directory):
-        shutil.rmtree(directory)
-    os.mkdir(directory)
+# Create mapping files and return entity map and relation map
+def create_mapping_files(all_triples, sub_dir):
+    ent_mapping, rel_mapping = map_constituents(all_triples)
+    # Key = raw_ent/raw_rel
+    # Val = mapping
+    # Writes the list of mappings in the form [raw_value,mapping]
+    write_data([[ent_mapping[entity], entity] for entity in ent_mapping], os.path.join(sub_dir, ENTITY_MAP))
+    write_data([[rel_mapping[relation], relation] for relation in rel_mapping], os.path.join(sub_dir, RELATION_MAP))
+
+# Map entities and relations to integers
+def map_constituents(triple_list):
+    entity_map = {}
+    relation_map = {}
+    entity_count = 0
+    relation_count = 0
+    for triple in triple_list:
+        if not triple[ENTITY_1] in entity_map:
+            entity_map[triple[ENTITY_1]] = str(entity_count)
+            entity_count += 1
+        if not triple[RELATION] in relation_map:
+            relation_map[triple[RELATION]] = str(relation_count)
+            relation_count += 1
+        if not triple[ENTITY_2] in entity_map:
+            entity_map[triple[ENTITY_2]] = str(entity_count)
+            entity_count += 1
+
+    return entity_map, relation_map
 
 def create_splits(data, set_of_data, sub_dir, config):
     if config[TYPE_SPLIT] == RANDOM:
@@ -137,9 +167,9 @@ def random_splits(data, set_of_data, sub_dir, config):
         test.extend(generate_negatives(test, list(test_entities), set_of_data, false_triple_ratio))
         valid.extend(generate_negatives(valid, list(valid_entities), set_of_data, false_triple_ratio))
 
-        write_list(train, train_path)
-        write_list(test, test_path)
-        write_list(valid, valid_path)
+        write_data(train, train_path)
+        write_data(test, test_path)
+        write_data(valid, valid_path)
 
 # Generates false triples, while avoiding duplicates
 def generate_negatives(data, entity_list, set_of_data, false_triple_ratio):
@@ -165,7 +195,7 @@ def generate_negatives(data, entity_list, set_of_data, false_triple_ratio):
             negatives.append([line[ENTITY_1], line[RELATION], negative_entity, '0'])
     return negatives
 
-def write_list(data, file_path):
+def write_data(data, file_path):
     with open(file_path, 'w+') as out_file:
         # if list is empty
         if not data:

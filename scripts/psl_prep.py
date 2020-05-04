@@ -41,11 +41,10 @@ CLI_DIR = os.path.join(PSL_DIR, CLI)
 DATA_KGE_DIR = os.path.join(PSL_DATA_DIR, KGE)
 
 def main(dataset_name, dim_num, split_num):
-    dataset_dir = os.path.join(os.path.dirname(BASE_DIR), dataset_name)
     dataset_splits_dir = os.path.join(RAW_DATA_DIR, dataset_name)
 
-    # Create mapping files and return mappings
-    entity_map, relation_map = create_mapping_files(dataset_dir)
+    entity_map, relation_map = load_mappings(dataset_splits_dir)
+    makedir(DATA_KGE_DIR)
 
     # Loop through data splits
     for split_num in range(0, split_num):
@@ -84,18 +83,6 @@ def main(dataset_name, dim_num, split_num):
         write_data(rules, psl_rules_target)
         write_data(predicates, psl_predicates_target)
 
-# Create mapping files and return entity map and relation map
-def create_mapping_files(dataset_dir):
-    all_triples = load_helper(os.path.join(dataset_dir, DATA_FILE))
-    ent_mapping, rel_mapping = map_constituents(all_triples)
-    makedir(DATA_KGE_DIR)
-    # Key = raw_ent/raw_rel
-    # Val = mapping
-    # Writes the list of mappings in the form [raw_value,mapping]
-    write_data([[ent_mapping[entity], entity] for entity in ent_mapping], os.path.join(DATA_KGE_DIR, ENTITY_MAP))
-    write_data([[rel_mapping[relation], relation] for relation in rel_mapping], os.path.join(DATA_KGE_DIR, RELATION_MAP))
-
-    return ent_mapping, rel_mapping
 # Separates triples into true and false group and maps them
 def separate_triples(raw_split_dir, file_name, entity_map, relation_map):
     triple_list = load_helper(os.path.join(raw_split_dir, file_name))
@@ -155,24 +142,17 @@ def load_helper(data_file):
 
     return helper
 
-# Map entities and relations to integers
-def map_constituents(triple_list):
-    entity_map = {}
-    relation_map = {}
-    entity_count = 0
-    relation_count = 0
-    for triple in triple_list:
-        if not triple[ENTITY_1] in entity_map:
-            entity_map[triple[ENTITY_1]] = str(entity_count)
-            entity_count += 1
-        if not triple[RELATION] in relation_map:
-            relation_map[triple[RELATION]] = str(relation_count)
-            relation_count += 1
-        if not triple[ENTITY_2] in entity_map:
-            entity_map[triple[ENTITY_2]] = str(entity_count)
-            entity_count += 1
-
-    return entity_map, relation_map
+# TODO write better function
+def load_mappings(dataset_splits_dir):
+    ent_map_list = load_helper(os.path.join(dataset_splits_dir, ENTITY_MAP))
+    rel_map_list = load_helper(os.path.join(dataset_splits_dir, RELATION_MAP))
+    ent_map = {}
+    rel_map = {}
+    for line in ent_map_list:
+        ent_map[line[1]] = line[0]
+    for line in rel_map_list:
+        rel_map[line[1]] = line[0]
+    return ent_map, rel_map
 
 def makedir(directory):
     if os.path.exists(directory):
