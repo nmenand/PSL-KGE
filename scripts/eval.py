@@ -141,9 +141,6 @@ def main(config):
     data, entity_list, set_of_data = load_data(config)
     dimensions = config[DIMENSIONS]
 
-    entity_mapping = load_mappings(MAPE_DIR, 1, 0)
-    relation_mapping = load_mappings(MAPR_DIR, 1, 0)
-
     ent_embeddings = []
     rel_embeddings = []
     for dim in range(1, dimensions+1):
