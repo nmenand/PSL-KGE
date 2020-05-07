@@ -11,6 +11,7 @@ RELATION_DIM = "psl/cli/inferred-predicates/RELATIONDIM"
 PSL_DATA_DIR = "psl/data/kge/"
 ENTITY_DIR = ""
 TRUEBLOCK_DIR = "/learn/trueblock_obs.txt"
+TRAINBLOCK_DIR = "/eval/trueblock_obs.txt"
 FALSEBLOCK_DIR = "/learn/falseblock_obs.txt"
 POS_OUTPUT_DIR = "positive_evaluated_triples.txt"
 NEG_OUTPUT_DIR = "negative_evaluated_triples.txt"
@@ -31,7 +32,7 @@ ENTITY_DIR = os.path.join(os.path.dirname(BASE_DIR), ENTITY_DIM)
 RELATION_DIR = os.path.join(os.path.dirname(BASE_DIR), RELATION_DIM)
 DATA_DIR = os.path.dirname(BASE_DIR)
 TRUE_DIR = os.path.join(DATA_DIR, PSL_DATA_DIR + SPLIT_NO + TRUEBLOCK_DIR)
-MORE_DATA_DIR = os.path.join(DATA_DIR, PSL_DATA_DIR + SPLIT_NO + TRUEBLOCK_DIR)
+REST_OF_DATA_DIR = os.path.join(DATA_DIR, PSL_DATA_DIR + SPLIT_NO + TRAINBLOCK_DIR)
 FALSE_DIR = os.path.join(DATA_DIR, PSL_DATA_DIR + SPLIT_NO + FALSEBLOCK_DIR)
 
 def load_embeddings(file_name, key, value):
@@ -56,6 +57,9 @@ def load_data(config):
     entities = set()
     set_of_data = set()
 
+    TRUE_DIR = os.path.join(DATA_DIR, PSL_DATA_DIR + SPLIT_NO + TRUEBLOCK_DIR)
+    REST_OF_DATA_DIR = os.path.join(DATA_DIR, PSL_DATA_DIR + SPLIT_NO + TRAINBLOCK_DIR)
+    FALSE_DIR = os.path.join(DATA_DIR, PSL_DATA_DIR + SPLIT_NO + FALSEBLOCK_DIR)
     with open(TRUE_DIR, 'r') as data_fd:
         # Read input file into a list of lines and a set of all entities seen
         for line in data_fd:
@@ -63,6 +67,12 @@ def load_data(config):
             data.append(line_data)
             set_of_data.add(tuple(line_data))
             entities.update([line_data[0], line_data[2]])
+    with open(REST_OF_DATA_DIR, 'r') as data_fd:
+        for line in data_fd:
+            line_data = line.strip('\n').split('\t')
+            set_of_data.add(tuple(line_data))
+            entities.update([line_data[0], line_data[2]])
+
     entity_list = list(entities)
 
     return data, entity_list, set_of_data
@@ -138,7 +148,7 @@ def main(config):
 
     test_all(dimensions, ent_embeddings, rel_embeddings)
 
-    predict_links(ent_embeddings, rel_embeddings, entity_list, data, set_of_data)
+    predict_links(ent_embeddings, rel_embeddings, entity_list, data[0:5000], set_of_data)
 
 def _load_args(args):
     executable = args.pop(0)
