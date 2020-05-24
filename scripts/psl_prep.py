@@ -40,7 +40,7 @@ PSL_DATA_DIR = os.path.join(PSL_DIR, DATA)
 CLI_DIR = os.path.join(PSL_DIR, CLI)
 DATA_KGE_DIR = os.path.join(PSL_DATA_DIR, KGE)
 
-def main(dataset_name, dim_num, split_num):
+def main(dataset_name, dim_num, split_num, rule_type, neg_triple_ratio):
     dataset_splits_dir = os.path.join(RAW_DATA_DIR, dataset_name)
 
     entity_map, relation_map = load_mappings(dataset_splits_dir)
@@ -79,7 +79,7 @@ def main(dataset_name, dim_num, split_num):
         # Generate and write rules
         psl_rules_target = os.path.join(CLI_DIR, RULES_PSL)
         psl_predicates_target = os.path.join(CLI_DIR, DATA_PSL)
-        rules, predicates = generate_rules(dim_num)
+        rules, predicates = generate_rules(dim_num, rule_type, neg_triple_ratio)
         write_data(rules, psl_rules_target)
         write_data(predicates, psl_predicates_target)
 
@@ -176,9 +176,11 @@ def _load_args(args):
     dataset_name = config["dataset"]
     dim_num = config["dimensions"]
     split_num = config["splits"]
+    rule_type = config["rules"]
+    neg_triple_ratio = config["false_triples_ratio"]
 
-    return dataset_name, dim_num, split_num
+    return dataset_name, dim_num, split_num, rule_type, neg_triple_ratio
 
 if __name__ == '__main__':
-    dataset_name, dim_num, split_num = _load_args(sys.argv)
-    main(dataset_name, dim_num, split_num)
+    dataset_name, dim_num, split_num, rule_type, neg_triple_ratio = _load_args(sys.argv)
+    main(dataset_name, dim_num, split_num, rule_type, neg_triple_ratio)
