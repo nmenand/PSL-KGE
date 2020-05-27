@@ -86,9 +86,9 @@ def eval_triple(mapped_e1 , mapped_e2, mapped_rel, dimensions, ent_embeddings, r
     L2_norm = 0
     for dim in range(1, dimensions+1):
         try:
-            e1_num = float(ent_embeddings[dim-1][mapped_e1])
-            e2_num = float(ent_embeddings[dim-1][mapped_e2])
-            rel_num = float(rel_embeddings[dim-1][mapped_rel])
+            e1_num = float(ent_embeddings[dim-1][float(mapped_e1)])
+            e2_num = float(ent_embeddings[dim-1][float(mapped_e2)])
+            rel_num = float(rel_embeddings[dim-1][float(mapped_rel)])
             value = e1_num + rel_num - e2_num
             L2_norm += value**2
             L1_norm += abs(value)
@@ -149,7 +149,7 @@ def main(config):
         ent_embeddings.append(load_embeddings(ENTITY_DIR + str(dim) + TXT, 0, 1))
         rel_embeddings.append(load_embeddings(RELATION_DIR + str(dim) + TXT, 0, 1))
 
-    #test_all(dimensions, ent_embeddings, rel_embeddings)
+    test_all(dimensions, ent_embeddings, rel_embeddings)
 
     predict_links(ent_embeddings, rel_embeddings, len(entity_list), data, set_of_data, rel_list)
 
