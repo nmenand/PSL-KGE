@@ -1,67 +1,45 @@
 #!bin/usr/env python3
 from statistics import median
+from math import fabs
 
-# 0 for L1 norm, 1 for L2 norm
-NORM_TYPE = 0
 SCORE_INDEX = 0
 # Returns the L1 and L2 norms centered around 0
-def eval_triple(mapped_e1 , mapped_e2, mapped_rel, dimensions, ent_embeddings, rel_embeddings):
+def eval_triple(mapped_e1 , mapped_e2, mapped_rel, dimensions, ent_embeddings, rel_embeddings, _fabs = fabs):
     L1_norm = 0
-    L2_norm = 0
     for dim in range(1, dimensions+1):
         try:
-            e1_num = float(ent_embeddings[dim-1][mapped_e1])
-            e2_num = float(ent_embeddings[dim-1][mapped_e2])
-            rel_num = float(rel_embeddings[dim-1][mapped_rel])
-            value = e1_num + rel_num - e2_num
-            L2_norm += value**2
-            L1_norm += abs(value)
+            e1_num = ent_embeddings[dim-1][mapped_e1]
+            e2_num = ent_embeddings[dim-1][mapped_e2]
+            rel_num = rel_embeddings[dim-1][mapped_rel]
+            L1_norm += _fabs(e1_num + rel_num - e2_num)
         except KeyError:
-            return None, None
-    return L1_norm, L2_norm**(0.5)
+            return -1
+    return L1_norm
 
 # generate rankings
-def generate_link_ranking(ent_embeddings, rel_embeddings, ent_list, mapped_e1, mapped_rel, mapped_e2):
-    ranking_list = []
+def generate_link_ranking(ent_embeddings, rel_embeddings, num_entities, mapped_e1, mapped_rel, mapped_e2, set_of_data):
+    rank = 1
     dimensions = len(ent_embeddings)
     # Keep track of evaluated triples as to not compute them twice
-    evaluated_triples = {}
     valid_triple_score = eval_triple(mapped_e1, mapped_e2, mapped_rel, dimensions, ent_embeddings, rel_embeddings)
-    if valid_triple_score != (None, None):
-        ranking_list.append((valid_triple_score, mapped_e1, mapped_rel, mapped_e2))
-        evaluated_triples[(mapped_e1, mapped_rel, mapped_e2)] = valid_triple_score
-        for ent in ent_list:
-            corrupted_ent = ent
+    if valid_triple_score != -1:
+        for corrupted_ent in range(0,num_entities):
             # Corrupt head
-            if (corrupted_ent, mapped_rel, mapped_e2) in evaluated_triples:
-                score = evaluated_triples[(corrupted_ent, mapped_rel, mapped_e2)]
-            else:
+            if (corrupted_ent, mapped_rel, mapped_e2) not in set_of_data:
                 score = eval_triple(corrupted_ent, mapped_e2, mapped_rel, dimensions, ent_embeddings, rel_embeddings)
-            if score != (None, None):
-                ranking_list.append((score, corrupted_ent, mapped_rel, mapped_e2))
-
+                if score != -1:
+                    if score < valid_triple_score:
+                        rank+=1
             # Corrupt tail
-            if (mapped_e1, mapped_rel, corrupted_ent) in evaluated_triples:
-                score = evaluated_triples[(mapped_e1, mapped_rel, corrupted_ent)]
-            else:
+            if (mapped_e1, mapped_rel, corrupted_ent) not in set_of_data:
                 score = eval_triple(mapped_e1, corrupted_ent, mapped_rel, dimensions, ent_embeddings, rel_embeddings)
-            if score != (None, None):
-                ranking_list.append((score, mapped_e1, mapped_rel, corrupted_ent))
-        # Sort ranking on NORM_TYPE in ascending order
-        ranking_list.sort(key=lambda x: x[SCORE_INDEX][NORM_TYPE])
-    return ranking_list, valid_triple_score
+                if score != -1:
+                    if score < valid_triple_score:
+                        rank+=1
+        return rank
+    return -1
 
-def eval_link_ranking(set_of_positive_data, target_triple, ranking_list):
-    rank = 1
-    for (value, entity1, relation, entity2) in ranking_list:
-        # TODO: what to do about this commented out line.
-        #if (entity1, relation, entity2) not in set_of_positive_data:
-            if (entity1, relation, entity2) == target_triple:
-                return rank
-            else:
-                rank += 1
-
-def predict_links(ent_embeddings, rel_embeddings, ent_list, test_list, set_of_data):
+def predict_links(ent_embeddings, rel_embeddings, num_entities, test_list, set_of_data, rel_list):
     list_of_ranks = []
     total_reciprocal_rank = 0
     hits_at_1 = 0
@@ -69,11 +47,10 @@ def predict_links(ent_embeddings, rel_embeddings, ent_list, test_list, set_of_da
     hits_at_5 = 0
     hits_at_10 = 0
     num_skipped = 0
-
     for (e1, rel, e2) in test_list:
-        ranking_list, test_triple_score = generate_link_ranking(ent_embeddings, rel_embeddings, ent_list, e1, rel, e2)
-        if test_triple_score != (None, None):
-            curr_rank = eval_link_ranking(set_of_data, (e1, rel, e2), ranking_list)
+        curr_rank = generate_link_ranking(ent_embeddings, rel_embeddings, num_entities, e1, rel, e2, set_of_data)
+        if curr_rank != -1:
+            #curr_rank = rank #eval_link_ranking(set_of_data, (e1, rel, e2), ranking_list)
             list_of_ranks.append(curr_rank)
             total_reciprocal_rank += 1/curr_rank
 

@@ -182,12 +182,18 @@ def generate_negatives(data, entity_list, set_of_data, false_triple_ratio):
 
             # Select a random entity from the list of entities
             negative_entity = random.choice(entity_list)
-
+            if 0.5 <= random.random():
+                negative_triple = (line[ENTITY_1], line[RELATION], negative_entity)
+            else:
+                negative_triple = (negative_entity, line[RELATION], line[ENTITY_2])
             # If the new triple is either valid or has already been created,
             # pick a new negative entity
-            while (line[ENTITY_1], line[RELATION], negative_entity) in set_of_data:
+            while negative_triple in set_of_data:
                 negative_entity = random.choice(entity_list)
-
+                if 0.5 <= random.random():
+                    negative_triple = (line[ENTITY_1], line[RELATION], negative_entity)
+                else:
+                    negative_triple = (negative_entity, line[RELATION], line[ENTITY_2])
             # Add the new triple to the set to avoid duplicates in the same split
             set_of_data.add((line[ENTITY_1], line[RELATION], negative_entity))
 

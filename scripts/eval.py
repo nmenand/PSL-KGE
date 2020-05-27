@@ -39,7 +39,7 @@ def load_embeddings(file_name, key, value):
     mapping = {}
     with open(file_name) as map_file:
         for line in map_file:
-            mapping[line.strip('\n').split('\t')[key]] = line.strip('\n').split('\t')[value]
+            mapping[int(line.strip('\n').split('\t')[key])] = float(line.strip('\n').split('\t')[value])
     return mapping
 
 def write_data(data, file_path):
@@ -55,6 +55,7 @@ def write_data(data, file_path):
 def load_data(config):
     data = []
     entities = set()
+    relations = set()
     set_of_data = set()
 
     TRUE_DIR = os.path.join(DATA_DIR, PSL_DATA_DIR + SPLIT_NO + TRUEBLOCK_DIR)
@@ -63,19 +64,21 @@ def load_data(config):
     with open(TRUE_DIR, 'r') as data_fd:
         # Read input file into a list of lines and a set of all entities seen
         for line in data_fd:
-            line_data = line.strip('\n').split('\t')
+            line_data = list(map(int,line.strip('\n').split('\t')))
             data.append(line_data)
             set_of_data.add(tuple(line_data))
             entities.update([line_data[0], line_data[2]])
+            relations.add(line_data[1])
     with open(REST_OF_DATA_DIR, 'r') as data_fd:
         for line in data_fd:
-            line_data = line.strip('\n').split('\t')
+            line_data = list(map(int,line.strip('\n').split('\t')))
             set_of_data.add(tuple(line_data))
             entities.update([line_data[0], line_data[2]])
 
     entity_list = list(entities)
+    rel_list = list(relations)
 
-    return data, entity_list, set_of_data
+    return data, entity_list, set_of_data, rel_list
 
 # Returns the L1 and L2 norms centered around 0
 def eval_triple(mapped_e1 , mapped_e2, mapped_rel, dimensions, ent_embeddings, rel_embeddings):
@@ -137,7 +140,7 @@ def test_all(dimensions, ent_embeddings, rel_embeddings):
 
 def main(config):
 
-    data, entity_list, set_of_data = load_data(config)
+    data, entity_list, set_of_data, rel_list = load_data(config)
     dimensions = config[DIMENSIONS]
 
     ent_embeddings = []
@@ -146,9 +149,9 @@ def main(config):
         ent_embeddings.append(load_embeddings(ENTITY_DIR + str(dim) + TXT, 0, 1))
         rel_embeddings.append(load_embeddings(RELATION_DIR + str(dim) + TXT, 0, 1))
 
-    test_all(dimensions, ent_embeddings, rel_embeddings)
+    #test_all(dimensions, ent_embeddings, rel_embeddings)
 
-    predict_links(ent_embeddings, rel_embeddings, entity_list, data[0:5000], set_of_data)
+    predict_links(ent_embeddings, rel_embeddings, len(entity_list), data, set_of_data, rel_list)
 
 def _load_args(args):
     executable = args.pop(0)
