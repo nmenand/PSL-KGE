@@ -195,10 +195,11 @@ def generate_negatives(data, entity_list, set_of_data, false_triple_ratio):
                 else:
                     negative_triple = (negative_entity, line[RELATION], line[ENTITY_2])
             # Add the new triple to the set to avoid duplicates in the same split
-            set_of_data.add((line[ENTITY_1], line[RELATION], negative_entity))
-
+            set_of_data.add(negative_triple)
+            negative_list = list(negative_triple)
+            negative_list.append('0')
             # Append triple to the list of negative data
-            negatives.append([line[ENTITY_1], line[RELATION], negative_entity, '0'])
+            negatives.append(negative_list)
     return negatives
 
 def write_data(data, file_path):
